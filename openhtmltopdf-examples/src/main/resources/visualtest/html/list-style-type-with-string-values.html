@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+        <title>Testing list-style-type</title>
+    </head>
+
+    <body>
+        <ul>
+            <li>
+                Default bullet
+            </li>
+            <li style="list-style-type: square;">
+                Existing square bullet
+            </li>
+            <li style="list-style-type: '+ ';">
+                Bullet is the string "+ "
+            </li>
+            <li style="list-style-type: '- ';">
+                Bullet is the string "- "
+            </li>
+            <li style="list-style-type: 'abc';">
+                Bullet is the string "abc"
+            </li>
+            <li style="list-style-type: 'none';">
+                Bullet is the string "none"
+            </li>
+            <li style="list-style-type: 'thisShouldRunOffPage';">
+                Bullet is the string "thisShouldRunOffPage"
+            </li>
+            <li style="list-style-type: '';">
+                Bullet is the empty string
+            </li>
+        </ul>
+    </body>
+</html>
