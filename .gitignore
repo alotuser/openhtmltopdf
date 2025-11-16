@@ -22,3 +22,16 @@ Maven_Ant_Builder.launch
 /openhtmltopdf-core/nbproject/
 /.vscode/
 /.metadata/
+
+/**/.classpath
+/**/.project
+/**/.factorypath
+
+
+**/target/
+**/META-INF/
+**/public/doc/
+
+**/.settings/
+**/.apt_generated/
+**/.apt_generated_tests/
