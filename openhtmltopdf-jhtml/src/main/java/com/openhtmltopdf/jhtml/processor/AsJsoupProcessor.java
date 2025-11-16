@@ -255,5 +255,14 @@ public class AsJsoupProcessor implements AsProcessor {
 			return null;
 		return asRenderer.getContentAreaEdge(box);
 	}
+
+	/**
+	 * Get the processed Jsoup Document.
+	 *
+	 * @return The Jsoup Document
+	 */
+	public Document getJsoupDoc() {
+		return _doc;
+	}
 	
 }
