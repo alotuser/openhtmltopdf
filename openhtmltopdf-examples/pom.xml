@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>io.github.openhtmltopdf</groupId>
+		<groupId>com.github.alotuser</groupId>
 		<artifactId>openhtmltopdf-parent</artifactId>
 		<version>${revision}</version>
 	</parent>
@@ -33,22 +33,22 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-pdfbox</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-rtl-support</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-svg-support</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -63,22 +63,22 @@
 			<version>${open.rhino.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-mathml-support</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-java2d</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-objects</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-latex-support</artifactId>
 			<version>${project.version}</version>
 		</dependency>

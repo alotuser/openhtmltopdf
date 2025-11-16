@@ -69,6 +69,8 @@ public class BlockBox extends Box {
     public static final int POSITION_VERTICALLY = 1;
     public static final int POSITION_HORIZONTALLY = 2;
     public static final int POSITION_BOTH = POSITION_VERTICALLY | POSITION_HORIZONTALLY;
+    
+    public static final String JHTML_BOX_ID = "jhtmlid";
 
     /**
      * What type of direct child content this block box contains.
@@ -1089,6 +1091,10 @@ public class BlockBox extends Box {
             if (id != null) {
                 c.addBoxId(id, this);
             }
+        }
+        String id = c.getNamespaceHandler().getAttributeValue(getElement(), JHTML_BOX_ID);
+        if (id != null) {
+            c.addBoxId(id, this);
         }
     }
 

@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>io.github.openhtmltopdf</groupId>
+		<groupId>com.github.alotuser</groupId>
 		<artifactId>openhtmltopdf-parent</artifactId>
 		<version>${revision}</version>
 	</parent>
@@ -60,12 +60,12 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-svg-support</artifactId>
 			<version>${project.version}</version>
 		</dependency>

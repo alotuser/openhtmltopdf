@@ -1,0 +1,84 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.github.alotuser</groupId>
+		<artifactId>openhtmltopdf-parent</artifactId>
+		<version>${revision}</version>
+	</parent>
+	<artifactId>openhtmltopdf-jhtml</artifactId>
+	<name>name</name>
+	<description>desc</description>
+
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.alotuser</groupId>
+			<artifactId>openhtmltopdf-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alotuser</groupId>
+			<artifactId>openhtmltopdf-mathml-support</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alotuser</groupId>
+			<artifactId>openhtmltopdf-pdfbox</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alotuser</groupId>
+			<artifactId>openhtmltopdf-svg-support</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.alotuser</groupId>
+			<artifactId>openhtmltopdf-java2d</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alotuser</groupId>
+			<artifactId>openhtmltopdf-latex-support</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alotuser</groupId>
+			<artifactId>openhtmltopdf-objects</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alotuser</groupId>
+			<artifactId>openhtmltopdf-rtl-support</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.21.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alotuser</groupId>
+			<artifactId>astool</artifactId>
+			<version>1.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jfree</groupId>
+			<artifactId>jfreechart</artifactId>
+			<version>1.5.6</version>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

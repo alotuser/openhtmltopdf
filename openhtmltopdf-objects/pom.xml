@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>io.github.openhtmltopdf</groupId>
+		<groupId>com.github.alotuser</groupId>
 		<artifactId>openhtmltopdf-parent</artifactId>
 		<version>${revision}</version>
 	</parent>
@@ -67,7 +67,7 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>io.github.openhtmltopdf</groupId>
+			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-pdfbox</artifactId>
 			<version>${project.version}</version>
 		</dependency>
