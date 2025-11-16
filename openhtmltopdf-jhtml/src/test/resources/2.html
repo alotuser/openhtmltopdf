@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>新鲜草莓价签</title>
+	<style type="text/css">
+		@page {
+			margin: 0;
+			padding: 0;
+		}
+
+		/* 基础样式 */
+		body {
+			margin: 0;
+			padding: 0;
+			background-color: #fef9f3;
+			font-family: kkyq;
+			color: #333;
+			text-align: center;
+		}
+
+		/* 主容器 - 使用温暖色调激发食欲 */
+		.price-tag {
+			width: 396px;
+			height: 296px;/* 高度调整为296px =300px-2px-2px  */
+			border: 2px solid #ff6b6b;
+			margin: auto;
+			background-color: #fff;
+			position: relative;
+			overflow: hidden;
+		}
+
+		/* 商品名称区域 - 使用红色激发食欲 */
+		.product-header {
+			background-color: #ff6b6b;
+			color: white;
+			padding: 15px 0;
+			margin-bottom: 20px;
+		}
+
+		.product-name {
+			font-size: 26px;
+			font-weight: bold;
+			margin: 0;
+			padding: 0 15px;
+		}
+
+		/* 价格区域 - 使用鲜艳颜色突出价格 */
+		.price-section {
+			margin: 25px 0;
+			padding: 0 20px;
+		}
+
+		.current-price {
+			font-size: 46px;
+			font-weight: bold;
+			color: #ff4757;
+			margin-bottom: 8px;
+		}
+
+		.original-price {
+			font-size: 18px;
+			color: #95a5a6;
+			text-decoration: line-through;
+		}
+
+		/* 商品描述 */
+		.product-description {
+			color: #555;
+			font-size: 16px;
+			line-height: 1.4;
+			padding: 0 20px;
+			margin: 20px 0;
+		}
+
+		/* 新鲜度标签 - 使用绿色表示新鲜 */
+		.freshness-tag {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			background-color: #2ed573;
+			color: white;
+			padding: 5px 10px;
+			font-size: 14px;
+			font-weight: bold;
+		}
+
+		/* 底部信息 */
+		.product-footer {
+			border-top: 1px solid #ffa8a8;
+			padding: 12px 20px;
+			margin-top: 20px;
+			overflow: hidden;
+		}
+
+		.product-origin {
+			float: left;
+			font-size: 16px;
+			color: #ff6b6b;
+			font-weight: bold;
+		}
+
+		.product-weight {
+			float: right;
+			font-size: 16px;
+			color: #ff6b6b;
+			font-weight: bold;
+		}
+
+		.clear {
+			clear: both;
+		}
+
+		/* 装饰性元素 - 使用CSS 2.1兼容方式 */
+		.stripe-decoration {
+			height: 5px;
+			background-color: #ffa8a8;
+			margin: 0 20px 15px 20px;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="price-tag">
+		<div id="ftag" class="freshness-tag">今日新鲜</div>
+
+		<div class="product-header">
+			<h1 id="pname" class="product-name">精选奶油草莓 500g</h1>
+		</div>
+
+		<div class="stripe-decoration"></div>
+
+		<div class="price-section">
+			<div class="current-price">¥29.90</div>
+			<div class="original-price">原价: ¥35.90</div>
+		</div>
+
+		<div class="product-description">
+			精选优质奶油草莓，果肉饱满，甜度高，香气浓郁，当日采摘直达，保证新鲜口感。
+		</div>
+
+		<div class="product-footer">
+			<div class="product-origin">产地: 丹东</div>
+			<div class="product-weight">净重: 500g</div>
+			<div class="clear"></div>
+		</div>
+	</div>
+</body>
+
+</html>

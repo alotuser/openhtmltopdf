@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>自适应商品价签</title>
+<style type="text/css">
+
+
+@page {
+    margin: 0;
+    padding: 0;
+}
+
+/* 基础样式重置 */
+html, body, div, h1, p, span {
+    margin: 0;
+    padding: 0;
+}
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #fff; /* 白色背景 */
+    color: #000; /* 黑色文字 */
+}
+
+/* 价签容器 - 使用百分比实现完全响应式 */
+.price-tag-container {
+    position: absolute;
+    top: 0%;
+    left: 0%;
+    width: 100%;
+    height: 100%;
+    border: 3px solid #000; /* 使用vmin单位确保边框比例 */
+    box-sizing: border-box;
+    background: #fff;
+}
+
+/* 促销标签 */
+.promo-label {
+    position: absolute;
+    top: 3%;
+    right: 3%;
+    background: #f00; /* 红色背景 */
+    color: #ff0; /* 黄色文字 */
+    font-size: 15px; 
+    font-weight: bold;
+    padding: 5px 10px;
+    transform: rotate(15deg);
+    border: 1px solid #000; /* 黑色边框 */
+    z-index: 10;
+}
+
+/* 商品名称 */
+.product-name {
+    position: absolute;
+    top: 5%;
+    left: 0;
+    width: 100%;
+    font-size: 15px; /* 使用vmin单位 */
+    font-weight: bold;
+    color: #000; /* 黑色 */
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* 价格显示区域 */
+.price-display {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ff0; /* 黄色背景 */
+    border: 2px solid #f00; /* 红色边框 */
+    padding: 2px 4px;
+    border-radius: 3px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* 超大价格 */
+.price {
+    font-size: 48px; 
+    font-weight: bold;
+    color: #f00; /* 红色 */
+    line-height: 1;
+    text-shadow: 0.3px 0.3px 0 #000; /* 黑色阴影增强可读性 */
+}
+
+.currency {
+    font-size: 48px;
+    vertical-align: super;
+    margin-right: 1px;
+}
+
+.unit {
+    font-size: 12px;
+    color: #000; /* 黑色 */
+    font-weight: normal;
+}
+
+/* 原价对比 */
+.original-price {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    font-size: 12px;
+    color: #000; /* 黑色 */
+    text-decoration: line-through;
+    text-align: center;
+}
+
+/* 商品描述 */
+.product-description {
+    position: absolute;
+    top: 58%;
+    left: 0;
+    width: 100%;
+    font-size: 12px;
+    color: #000; /* 黑色 */
+    text-align: center;
+    padding: 0 5%;
+    box-sizing: border-box;
+}
+
+/* 产品规格 */
+.product-specs {
+    position: absolute;
+    top: 68%;
+    left: 0;
+    width: 100%;
+    font-size: 12px;
+    color: #000; /* 黑色 */
+}
+
+.specs-table {
+    margin: 0 auto;
+    border-collapse: collapse;
+    width: 80%;
+}
+
+.specs-table td {
+    padding: 0.5px 1px;
+    text-align: left;
+}
+
+.specs-table td:first-child {
+    font-weight: bold;
+    width: 30%;
+}
+
+/* 条形码区域 */
+.barcode {
+    position: absolute;
+    bottom: 5%;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: #000; /* 黑色 */
+}
+
+.barcode span {
+    display: inline-block;
+    padding: 1px 2px;
+    background: #fff; /* 白色背景 */
+    border: 0.3px solid #000; /* 黑色边框 */
+    font-family: "Courier New", monospace;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+}
+
+/* 品牌标识 */
+.brand {
+    position: absolute;
+    bottom: 2%;
+    left: 2%;
+    font-size: 12px;
+    font-weight: bold;
+    color: #000;
+}
+
+/* 日期信息 */
+.date {
+    position: absolute;
+    bottom: 2%;
+    right: 2%;
+    font-size: 12px;
+    color: #000;
+}
+</style>
+</head>
+
+<body>
+<div class="price-tag-container">
+    <div class="promo-label">特价</div>
+    
+    <h1 class="product-name">有机富士苹果</h1>
+    
+    <div class="price-display">
+        <div class="price"><span class="currency">¥</span>19<span class="unit">.99</span></div>
+    </div>
+    
+    <div class="original-price">原价: ¥29.99</div>
+    
+    <p class="product-description">精选有机富士苹果，产自山东烟台，脆甜多汁，无农药残留</p>
+    
+    <div class="barcode">
+        <span>1234567890123</span>
+    </div>
+    
+    <div class="brand">绿色有机食品</div>
+    <div class="date">2023-11-15</div>
+</div>
+
+</body>
+</html>
