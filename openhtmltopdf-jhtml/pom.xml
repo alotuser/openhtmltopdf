@@ -3,14 +3,24 @@
 	<parent>
 		<groupId>com.github.alotuser</groupId>
 		<artifactId>openhtmltopdf-parent</artifactId>
-		<version>${revision}</version>
+		<version>1.0.1</version>
 	</parent>
+	
+	<packaging>jar</packaging>
+	
 	<artifactId>openhtmltopdf-jhtml</artifactId>
-	<name>name</name>
-	<description>desc</description>
+	<name>Openhtmltopdf Jhtml</name>
+	<description>A Java rendering engine based on OpenHTMLToPDF that supports one-click conversion of HTML to PDF, PNG images, and other formats. Provides flexible page configuration, font management, and element positioning capabilities, simplifying document generation and visual rendering workflows.</description>
 
-
+	
 	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${open.junit4.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>com.github.alotuser</groupId>
 			<artifactId>openhtmltopdf-core</artifactId>
@@ -70,15 +80,113 @@
 
 	</dependencies>
 
+
+	<licenses>
+		<license>
+			<name>GNU Lesser General Public License (LGPL), version 2.1 or later</name>
+			<url>http://www.gnu.org/licenses/lgpl.html</url>
+		</license>
+	</licenses>
+
+	<profiles>
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+								<configuration>
+									<gpgArguments>
+										<arg>--pinentry-mode</arg>
+										<arg>loopback</arg>
+									</gpgArguments>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
+
 		<plugins>
+			<!-- 使用 resources 插件复制多个 LICENSE 文件 -->
 			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.2.0</version>
+				<executions>
+					<execution>
+						<id>copy-license-files</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>
+								${project.build.outputDirectory}/META-INF</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/..</directory>
+									<includes>
+										<include>LICENSE*</include>
+									</includes>
+									<filtering>false</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<archive>
+						<manifestFile>
+							${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+					</archive>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Export-Package>*</Export-Package>
+					</instructions>
+				</configuration>
+
+				<executions>
+					<execution>
+						<id>bundle-manifest</id>
+						<phase>process-classes</phase>
+						<goals>
+							<goal>manifest</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
+
+
 </project>
