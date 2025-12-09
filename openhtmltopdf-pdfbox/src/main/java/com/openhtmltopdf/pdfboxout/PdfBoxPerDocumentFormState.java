@@ -33,183 +33,189 @@ import com.openhtmltopdf.util.ArrayUtil;
 import com.openhtmltopdf.util.XRLog;
 
 /**
- * The per document container for form and form control state.
+ * The per-document container for form and form control state.
  */
 public class PdfBoxPerDocumentFormState {
-    // We keep a map of forms for the document so we can add controls to the correct form as they are seen.
-    private final Map<Element, PdfBoxForm> forms = new HashMap<>();
 
-    // The list of controls in the document. Control class contains all the info we need to output a control.
-    private final List<PdfBoxForm.Control> controls = new ArrayList<>();
+	private static final String DEFAULT_APPEARANCE = "q\nQ\n";
 
-    // A set of controls, so we don't double process a control.
-    private final Set<Element> seenControls = new HashSet<>();
+	// We keep a map of forms for the document so we can add controls to the correct form as they are seen.
+	private final Map<Element, PdfBoxForm> forms = new HashMap<>();
 
-    // We keep a map of fonts to font resource name so we don't double add fonts needed for form controls.
-    private final Map<PDFont, String> controlFonts = new HashMap<>();
+	// The list of controls in the document. Control class contains all the info we need to output a control.
+	private final List<PdfBoxForm.Control> controls = new ArrayList<>();
 
-    // The checkbox style to appearance stream map. We only create appearance streams on demand and once for a specific
-    // style so we store appearance streams created here.
-    private final Map<CheckboxStyle, PDAppearanceStream> checkboxAppearances = new EnumMap<>(CheckboxStyle.class);
+	// A set of controls, so we don't double process a control.
+	private final Set<Element> seenControls = new HashSet<>();
 
-    // Again, we only create these appearance streams as needed.
-    private PDAppearanceStream checkboxOffAppearance;
-    private PDAppearanceStream radioBoxOffAppearance;
-    private PDAppearanceStream radioBoxOnAppearance;
-private PDAppearanceStream signatureAppearance;
-    // The ZapfDingbats font resource needed by checkbox and radio box appearance streams.
-    private PDResources checkBoxFontResource;
+	// We keep a map of fonts to font resource name so we don't double add fonts needed for form controls.
+	private final Map<PDFont, String> controlFonts = new HashMap<>();
 
-    public PDAppearanceStream getCheckboxStyle(CheckboxStyle style) {
-        return checkboxAppearances.get(style);
-    }
+	// The checkbox style to appearance stream map. We only create appearance streams on demand and once for a specific
+	// style so we store appearance streams created here.
+	private final Map<CheckboxStyle, PDAppearanceStream> checkboxAppearances = new EnumMap<>(CheckboxStyle.class);
 
-    public PDAppearanceStream getCheckboxOffStream() {
-        return this.checkboxOffAppearance;
-    }
+	// Again, we only create these appearance streams as needed.
+	private PDAppearanceStream checkboxOffAppearance;
+	private PDAppearanceStream radioBoxOffAppearance;
+	private PDAppearanceStream radioBoxOnAppearance;
+	private PDAppearanceStream signatureAppearance;
+	// The ZapfDingbats font resource needed by checkbox and radio box appearance streams.
+	private PDResources checkBoxFontResource;
 
-    public PDAppearanceStream getRadioOffStream() {
-        return this.radioBoxOffAppearance;
-    }
+	public PDAppearanceStream getCheckboxStyle(CheckboxStyle style) {
+		return checkboxAppearances.get(style);
+	}
 
-    public PDAppearanceStream getRadioOnStream() {
-        return this.radioBoxOnAppearance;
-    }
-public PDAppearanceStream getSignatureStream() {
-        return this.signatureAppearance;
-    }
-    /**
-     * Adds a form to a map to be used later by <code>processControls</code>.
-     */
-    public void addFormIfRequired(Box box, PdfBoxOutputDevice od) {
-        if (!forms.containsKey(box.getElement())) {
-            PdfBoxForm frm = PdfBoxForm.createForm(box.getElement(), this, od);
-            forms.put(box.getElement(), frm);
-        }
-    }
+	public PDAppearanceStream getCheckboxOffStream() {
+		return this.checkboxOffAppearance;
+	}
 
-    /**
-     * Adds a control to a list to be used later by <code>processControls</code>.
-     */
-    public void addControlIfRequired(Box box, PDPage page, AffineTransform transform, RenderingContext c, float pageHeight) {
-        if (!seenControls.contains(box.getElement())) {
-            controls.add(new PdfBoxForm.Control(box, page, new AffineTransform(transform), c, pageHeight));
-            seenControls.add(box.getElement());
-        }
-    }
+	public PDAppearanceStream getRadioOffStream() {
+		return this.radioBoxOffAppearance;
+	}
 
-    private String getControlFont(SharedContext sharedContext, PdfBoxForm.Control ctrl, RenderingContext renderingContext) {
-        PDFont fnt = ((PdfBoxFSFont) sharedContext.getFont(ctrl.box.getStyle().getFont(renderingContext))).getFontDescriptions().get(0).getFont();
-        String fontName;
+	public PDAppearanceStream getRadioOnStream() {
+		return this.radioBoxOnAppearance;
+	}
 
-        if (!controlFonts.containsKey(fnt)) {
-            fontName = "OpenHTMLFont" + controlFonts.size();
-            controlFonts.put(fnt, fontName);
-        } else {
-            fontName = controlFonts.get(fnt);
-        }
+	public PDAppearanceStream getSignatureStream() {
+		return this.signatureAppearance;
+	}
 
-        return fontName;
-    }
-private void createSignatureAppearanceStreams(PDDocument writer) {
+	/**
+	 * Adds a form to a map to be used later by <code>processControls</code>.
+	 */
+	public void addFormIfRequired(Box box, PdfBoxOutputDevice od) {
+		if (!forms.containsKey(box.getElement())) {
+			PdfBoxForm frm = PdfBoxForm.createForm(box.getElement(), this, od);
+			forms.put(box.getElement(), frm);
+		}
+	}
 
-        // this appearance is just a dummy to make the validation happy
-        signatureAppearance = PdfBoxForm.createCheckboxAppearance("q\nQ\n", writer, checkBoxFontResource);
-    }
+	/**
+	 * Adds a control to a list to be used later by <code>processControls</code>.
+	 */
+	public void addControlIfRequired(Box box, PDPage page, AffineTransform transform, RenderingContext c, float pageHeight) {
+		if (!seenControls.contains(box.getElement())) {
+			controls.add(new PdfBoxForm.Control(box, page, new AffineTransform(transform), c, pageHeight));
+			seenControls.add(box.getElement());
+		}
+	}
 
-    private void createCheckboxAppearanceStreams(PDDocument writer, PdfBoxForm.Control ctrl) {
-        CheckboxStyle style = CheckboxStyle.fromIdent(ctrl.box.getStyle().getIdent(CSSName.FS_CHECKBOX_STYLE));
+	private String getControlFont(SharedContext sharedContext, PdfBoxForm.Control ctrl, RenderingContext renderingContext) {
+		PDFont fnt = ((PdfBoxFSFont) sharedContext.getFont(ctrl.box.getStyle().getFont(renderingContext))).getFontDescriptions().get(0).getFont();
+		String fontName;
 
-        if (!checkboxAppearances.containsKey(style)) {
-            PDAppearanceStream strm = PdfBoxForm.createCheckboxAppearance(style, writer, checkBoxFontResource);
-            checkboxAppearances.put(style, strm);
-        }
+		if (!controlFonts.containsKey(fnt)) {
+			fontName = "OpenHTMLFont" + controlFonts.size();
+			controlFonts.put(fnt, fontName);
+		} else {
+			fontName = controlFonts.get(fnt);
+		}
 
-        if (checkboxOffAppearance == null) {
-            checkboxOffAppearance = PdfBoxForm.createCheckboxAppearance("q\nQ\n", writer, checkBoxFontResource);
-        }
-    }
+		return fontName;
+	}
 
-    private void createRadioboxAppearanceStream(PDDocument writer, PdfBoxForm.Control ctrl) {
-        if (radioBoxOffAppearance == null) {
-            radioBoxOffAppearance = PdfBoxForm.createCheckboxAppearance("q\nQ\n", writer, checkBoxFontResource);
-        }
+	private void createSignatureAppearanceStreams(PDDocument writer) {
 
-        if (radioBoxOnAppearance == null) {
-            radioBoxOnAppearance = PdfBoxForm.createCheckboxAppearance(CheckboxStyle.DIAMOND, writer, checkBoxFontResource);
-        }
-    }
+		// this appearance is just a dummy to make the validation happy
+		signatureAppearance = PdfBoxForm.createCheckboxAppearance(DEFAULT_APPEARANCE, writer, checkBoxFontResource);
+	}
 
-    private void createCheckboxFontResource() {
-        if (checkBoxFontResource == null) {
-            checkBoxFontResource = new PDResources();
-            checkBoxFontResource.put(COSName.getPDFName("OpenHTMLZap"), new PDType1Font(Standard14Fonts.FontName.ZAPF_DINGBATS));
-        }
-    }
+	private void createCheckboxAppearanceStreams(PDDocument writer, PdfBoxForm.Control ctrl) {
+		CheckboxStyle style = CheckboxStyle.fromIdent(ctrl.box.getStyle().getIdent(CSSName.FS_CHECKBOX_STYLE));
 
-    public void processControls(SharedContext sharedContext, PDDocument writer, Box root, RenderingContext renderingContext) {
-        for (PdfBoxForm.Control ctrl : controls) {
-            PdfBoxForm frm = findEnclosingForm(ctrl.box.getElement());
-            String fontName = null;
+		checkboxAppearances.computeIfAbsent(style, k -> PdfBoxForm.createCheckboxAppearance(style, writer, checkBoxFontResource));
 
-            if (ctrl.box.getElement().getAttribute("type").equals("text") && ctrl.box.getElement().getAttribute("class").contains("signature")) {
-                createSignatureAppearanceStreams(writer);
-            } else if (!ArrayUtil.isOneOf(ctrl.box.getElement().getAttribute("type"), "checkbox", "radio", "hidden")) {
-                // Need to embed a font for every control other than checkbox, radio and hidden.
-                fontName = getControlFont(sharedContext, ctrl, renderingContext);
-            } else if (ctrl.box.getElement().getAttribute("type").equals("checkbox")) {
-                createCheckboxFontResource();
-                createCheckboxAppearanceStreams(writer, ctrl);
-            } else if (ctrl.box.getElement().getAttribute("type").equals("radio")) {
-                createCheckboxFontResource();
-                createRadioboxAppearanceStream(writer, ctrl);
-            }
+		if (checkboxOffAppearance == null) {
+			checkboxOffAppearance = PdfBoxForm.createCheckboxAppearance(DEFAULT_APPEARANCE, writer, checkBoxFontResource);
+		}
+	}
 
-            if (frm != null) {
-                frm.addControl(ctrl, fontName);
-            }
-        }
+	private void createRadioboxAppearanceStream(PDDocument writer) {
+		if (radioBoxOffAppearance == null) {
+			radioBoxOffAppearance = PdfBoxForm.createCheckboxAppearance(DEFAULT_APPEARANCE, writer, checkBoxFontResource);
+		}
 
-        PDResources resources = new PDResources();
-        /* Defaultfonts */
-        resources.put(COSName.HELV, new PDType1Font(Standard14Fonts.FontName.HELVETICA));
-        resources.put(COSName.ZA_DB, new PDType1Font(Standard14Fonts.FontName.ZAPF_DINGBATS));
-        for (Map.Entry<PDFont, String> fnt : controlFonts.entrySet()) {
-            resources.put(COSName.getPDFName(fnt.getValue()), fnt.getKey());
-        }
+		if (radioBoxOnAppearance == null) {
+			radioBoxOnAppearance = PdfBoxForm.createCheckboxAppearance(CheckboxStyle.DIAMOND, writer, checkBoxFontResource);
+		}
+	}
 
-        if (forms.size() != 0) {
-            int start = 0;
-            PDAcroForm acro = new PDAcroForm(writer);
+	private void createCheckboxFontResource() {
+		if (checkBoxFontResource == null) {
+			checkBoxFontResource = new PDResources();
+			checkBoxFontResource.put(COSName.getPDFName("OpenHTMLZap"), new PDType1Font(Standard14Fonts.FontName.ZAPF_DINGBATS));
+		}
+	}
 
-            acro.setDefaultAppearance("/Helv 0 Tf 0 g");
-            acro.setNeedAppearances(Boolean.TRUE);
-            acro.setDefaultResources(resources);
+	public void processControls(SharedContext sharedContext, PDDocument writer, Box root, RenderingContext renderingContext) {
+		for (PdfBoxForm.Control ctrl : controls) {
+			PdfBoxForm frm = findEnclosingForm(ctrl.box.getElement());
+			String fontName = null;
 
-            writer.getDocumentCatalog().setAcroForm(acro);
+			if (ctrl.box.getElement().getAttribute("type").equals("text") && ctrl.box.getElement().getAttribute("class").contains("signature")) {
+				createSignatureAppearanceStreams(writer);
+			} else if (!ArrayUtil.isOneOf(ctrl.box.getElement().getAttribute("type"), "checkbox", "radio", "hidden")) {
+				// Need to embed a font for every control other than checkbox, radio and hidden.
+				fontName = getControlFont(sharedContext, ctrl, renderingContext);
+			} else if (ctrl.box.getElement().getAttribute("type").equals("checkbox")) {
+				createCheckboxFontResource();
+				createCheckboxAppearanceStreams(writer, ctrl);
+			} else if (ctrl.box.getElement().getAttribute("type").equals("radio")) {
+				createCheckboxFontResource();
+				createRadioboxAppearanceStream(writer);
+			}
 
-            for (PdfBoxForm frm : forms.values()) {
-                try {
-                    start = 1 + frm.process(acro, start, root);
-                } catch (IOException e) {
-                    throw new PdfContentStreamAdapter.PdfException("processControls", e);
-                }
-            }
-        }
-    }
+			if (frm != null) {
+				frm.addControl(ctrl, fontName);
+			}
+		}
 
-    /**
-     * Helper function to find an enclosing PdfBoxForm given a control element.
-     */
-    private PdfBoxForm findEnclosingForm(Node e) {
-        Element frmElement = DOMUtil.findClosestEnclosingElementWithNodeName(e, "form");
+		if (!forms.isEmpty()) {
+			processForms(writer, root);
+		}
+	}
 
-        if (frmElement != null &&
-                forms.containsKey(frmElement)) {
-            return forms.get(frmElement);
-        }
+	private void processForms(PDDocument writer, Box root) {
+		PDResources resources = new PDResources();
+		/* Default fonts */
+		resources.put(COSName.HELV, new PDType1Font(Standard14Fonts.FontName.HELVETICA));
+		resources.put(COSName.ZA_DB, new PDType1Font(Standard14Fonts.FontName.ZAPF_DINGBATS));
+		for (Map.Entry<PDFont, String> fnt : controlFonts.entrySet()) {
+			resources.put(COSName.getPDFName(fnt.getValue()), fnt.getKey());
+		}
 
-        XRLog.log(Level.WARNING, LogMessageId.LogMessageId1Param.GENERAL_PDF_FOUND_FORM_CONTROL_WITH_NO_ENCLOSING_FORM, e.getNodeName());
-        return null;
-    }
+		int start = 0;
+		PDAcroForm acro = new PDAcroForm(writer);
+
+		acro.setDefaultAppearance("/Helv 0 Tf 0 g");
+		acro.setNeedAppearances(Boolean.TRUE);
+		acro.setDefaultResources(resources);
+
+		writer.getDocumentCatalog().setAcroForm(acro);
+
+		for (PdfBoxForm frm : forms.values()) {
+			try {
+				start = 1 + frm.process(acro, start, root);
+			} catch (IOException e) {
+				throw new PdfContentStreamAdapter.PdfException("processControls", e);
+			}
+		}
+	}
+
+	/**
+	 * Helper function to find an enclosing PdfBoxForm given a control element.
+	 */
+	private PdfBoxForm findEnclosingForm(Node e) {
+		Element frmElement = DOMUtil.findClosestEnclosingElementWithNodeName(e, "form");
+
+		if (frmElement != null && forms.containsKey(frmElement)) {
+			return forms.get(frmElement);
+		}
+
+		XRLog.log(Level.WARNING, LogMessageId.LogMessageId1Param.GENERAL_PDF_FOUND_FORM_CONTROL_WITH_NO_ENCLOSING_FORM, e.getNodeName());
+		return null;
+	}
 }
