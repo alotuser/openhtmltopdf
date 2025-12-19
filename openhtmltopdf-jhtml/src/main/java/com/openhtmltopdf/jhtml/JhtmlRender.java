@@ -22,6 +22,7 @@ import org.w3c.dom.Element;
 
 import com.openhtmltopdf.extend.SVGDrawer;
 import com.openhtmltopdf.java2d.api.DefaultPageProcessor;
+import com.openhtmltopdf.jhtml.builder.AsLogBuilder;
 import com.openhtmltopdf.jhtml.builder.AsRendererBuilder;
 import com.openhtmltopdf.jhtml.config.BuilderConfig;
 import com.openhtmltopdf.jhtml.config.BuilderConfig.BaseBuilderConfig;
@@ -36,7 +37,9 @@ import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.PageSizeUnits;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder.PdfAConformance;
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer;
+import com.openhtmltopdf.util.ThreadCtx;
 import com.openhtmltopdf.util.XRLog;
+import com.openhtmltopdf.util.XRLogger;
 
 import cn.alotus.core.io.file.FileNameUtil;
 import cn.alotus.core.util.StrUtil;
@@ -97,6 +100,8 @@ public class JhtmlRender {
 	private AsRenderer asRenderer;
 
 	private AsProcessor asProcessor;
+	
+	private StringBuilder logStringBuilder;
 	
 	public JhtmlRender() {
 		super();
@@ -182,7 +187,10 @@ public class JhtmlRender {
 	public BufferedImage toImage(String html, BaseBuilderConfig... config) throws IOException {
 
 		XRLog.setLoggingEnabled(loggingEnabled);
-
+		if(loggingEnabled) {
+			logStringBuilder = AsLogBuilder.newStringBuilder();
+		}
+		
 		if(null!=asProcessor) {
 			html= asProcessor.asHtml(html);
 		}
@@ -229,7 +237,9 @@ public class JhtmlRender {
 	public List<BufferedImage> toImages(String html, BaseBuilderConfig... config) throws IOException {
 
 		XRLog.setLoggingEnabled(loggingEnabled);
-
+		if(loggingEnabled) {
+			logStringBuilder = AsLogBuilder.newStringBuilder();
+		}
 		AsRendererBuilder builder = new AsRendererBuilder();
 
 		builder.withHtmlContent(html, baseDocumentUri);
@@ -573,6 +583,17 @@ public class JhtmlRender {
 		this.loggingEnabled = loggingEnabled;
 	}
 
+	/**
+	 * Get the internal log StringBuilder if logging is enabled.
+	 *
+	 * @return StringBuilder containing log output, or null if logging is disabled
+	 */
+	public StringBuilder getLogStringBuilder() {
+		return logStringBuilder;
+	}
+	public String getLogString() {
+		return logStringBuilder!=null? logStringBuilder.toString():null;
+	}
 	/**
 	 * Configure use of pixel units (px) for layout calculations.
 	 *Pixel Dimensions is the size parameter of an exponential character image in two-dimensional space, usually represented in two dimensions: length and width, with units of pixels (px). For example, the pixel dimension of a photo may be labeled as "1920 × 1080", indicating that it contains 1920 pixels in the length direction and 1080 pixels in the width direction.

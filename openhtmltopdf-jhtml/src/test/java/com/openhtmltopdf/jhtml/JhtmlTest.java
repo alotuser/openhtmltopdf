@@ -17,7 +17,7 @@ import cn.alotus.core.io.resource.ResourceUtil;
 public class JhtmlTest {
 
 	public static void main(String[] args) throws IOException {
-		String resHtml="2.html";
+		String resHtml="1.html";
 		String html = ResourceUtil.readUtf8Str(resHtml);
 		URL fonts= ResourceUtil.getResource("fonts");
 		
@@ -38,15 +38,15 @@ public class JhtmlTest {
 //		
 		htmlRender.toPng(html, "D://"+resHtml+".png");
 
-		
-		String className="original-price";
+		System.out.println("log:"+htmlRender.getLogString());
+		String className=".original-price";
 
-		Map<org.jsoup.nodes.Element, Rectangle> mers = ajp.getElementById("pname");
- 
-		System.out.println(mers);
-
+		Map<org.jsoup.nodes.Element, Rectangle> mers = ajp.selectFirst(className);
+// 
+//		System.out.println(mers);
+//
 		Rectangle f = mers.values().stream().findFirst().get();
-
+//
 		BufferedImage original = ImageIO.read(new File("D:\\"+resHtml+".png"));
 
 		Rectangle rect = new Rectangle(f.x, f.y, f.width, f.height);
