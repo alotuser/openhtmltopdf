@@ -11,8 +11,15 @@ import com.openhtmltopdf.util.XRLog;
 import com.openhtmltopdf.util.XRLogger;
 import com.openhtmltopdf.util.XRSimpleLogFormatter;
 
+/**
+ * Utility to build a StringBuilder-based logger for capturing log output.
+ */
 public class AsLogBuilder {
-
+	/**
+	 * Creates a new StringBuilder logger and sets it as the current logger implementation.
+	 *
+	 * @return A StringBuilder that captures log output.
+	 */
 	public static StringBuilder newStringBuilder() {
 		final XRLogger delegate = new JDKXRLogger(false, Level.WARNING, new ConsoleHandler(), new XRSimpleLogFormatter());
 		final StringBuilder sb = new StringBuilder();
@@ -20,6 +27,9 @@ public class AsLogBuilder {
 		return sb;
 	}
 
+	/**
+	 * An XRLogger implementation that appends log messages to a StringBuilder.
+	 */
 	public static class StringBuilderLogger implements XRLogger {
 		private final StringBuilder sb;
 		private final XRLogger delegate;
