@@ -37,9 +37,7 @@ import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.PageSizeUnits;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder.PdfAConformance;
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer;
-import com.openhtmltopdf.util.ThreadCtx;
 import com.openhtmltopdf.util.XRLog;
-import com.openhtmltopdf.util.XRLogger;
 
 import cn.alotus.core.io.file.FileNameUtil;
 import cn.alotus.core.util.StrUtil;
@@ -374,6 +372,7 @@ public class JhtmlRender {
 	 * @param id The ID of the element to find.
 	 * @return A map of DOM Element to its content Rectangle
 	 */
+	@Deprecated
 	public Map<Element, Rectangle> findById(String id) {
 		if (asRenderer == null) {
 			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
@@ -390,6 +389,7 @@ public class JhtmlRender {
 	 * @param name The value of the name attribute to match.
 	 * @return Map of Element to Rectangle for matched elements
 	 */
+	@Deprecated
 	public Map<Element, Rectangle> findByName(String name) {
 		if (asRenderer == null) {
 			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
@@ -405,6 +405,7 @@ public class JhtmlRender {
 	 * @param cssClass CSS class string to match
 	 * @return Map of Element to Rectangle for matched elements
 	 */
+	@Deprecated
 	public Map<Element, Rectangle> findByClass(String cssClass) {
 		if (asRenderer == null) {
 			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
@@ -422,6 +423,7 @@ public class JhtmlRender {
 	 * @param tagName element tag name to match
 	 * @return Map of Element to Rectangle for matched elements
 	 */
+	@Deprecated
 	public Map<Element, Rectangle> findByTagName(String tagName) {
 		if (asRenderer == null) {
 			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
@@ -438,6 +440,7 @@ public class JhtmlRender {
 	 * @param value attribute value to match
 	 * @return Map of Element to Rectangle for matched elements
 	 */
+	@Deprecated
 	public Map<Element, Rectangle> findBySelector(String name, String value) {
 		if (asRenderer == null) {
 			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
