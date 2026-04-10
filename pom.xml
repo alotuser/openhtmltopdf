@@ -25,7 +25,7 @@
 
 	<properties>
 		<revision>1.0.0</revision> <!-- only used for local development,overriden in github actions -->
-		<open.batik.version>1.17</open.batik.version>
+		<open.batik.version>1.19</open.batik.version>
 
 		<!-- Please keep xmlgraphics-commons up to date with batik. -->
 		<open.xmlgraphics.commons.version>2.9</open.xmlgraphics.commons.version>
