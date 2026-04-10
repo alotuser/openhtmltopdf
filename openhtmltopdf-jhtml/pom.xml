@@ -65,7 +65,12 @@
 		<dependency>
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>
-			<version>1.21.2</version>
+			<version>1.22.1</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.htmlunit</groupId>
+		    <artifactId>htmlunit-jsoup</artifactId>
+		    <version>4.21.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.alotuser</groupId>
