@@ -44,6 +44,7 @@ import com.openhtmltopdf.java2d.Java2DUserAgent;
 import com.openhtmltopdf.java2d.api.FSPage;
 import com.openhtmltopdf.java2d.api.FSPageProcessor;
 import com.openhtmltopdf.jhtml.builder.AsRendererBuilder.AsRendererBuilderState;
+import com.openhtmltopdf.jhtml.render.AsUserAgent;
 import com.openhtmltopdf.layout.BoxBuilder;
 import com.openhtmltopdf.layout.Layer;
 import com.openhtmltopdf.layout.LayoutContext;
@@ -119,7 +120,7 @@ public class AsRenderer implements Closeable {
 		_objectDrawerFactory = state._objectDrawerFactory;
 		_outputDevice = new Java2DOutputDevice(state._layoutGraphics);
 
-		NaiveUserAgent uac = new Java2DUserAgent();
+		NaiveUserAgent uac = new AsUserAgent();
 
 		uac.setProtocolsStreamFactory(state._streamFactoryMap);
 
