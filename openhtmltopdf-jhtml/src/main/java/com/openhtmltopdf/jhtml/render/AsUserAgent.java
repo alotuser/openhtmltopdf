@@ -10,7 +10,7 @@ import javax.imageio.ImageIO;
 
 import com.openhtmltopdf.java2d.Java2DUserAgent;
 import com.openhtmltopdf.java2d.image.AWTFSImage;
-import com.openhtmltopdf.jhtml.util.JsoupUtil;
+import com.openhtmltopdf.jhtml.util.OkHttpUtil;
 import com.openhtmltopdf.outputdevice.helper.ExternalResourceControlPriority;
 import com.openhtmltopdf.outputdevice.helper.ExternalResourceType;
 import com.openhtmltopdf.resource.ImageResource;
@@ -44,11 +44,11 @@ public class AsUserAgent extends Java2DUserAgent {
 		if (ir != null) {
 			return ir;
 		}
-		if (!JsoupUtil.isHttp(resolved)) {
+		if (!OkHttpUtil.isHttp(resolved)) {
 			return super.getImageResource(uri, type);
 		} else {
 			// Finally we fetch from the network or file, etc.
-			try (InputStream is = JsoupUtil.getInputStream(uri)) {
+			try (InputStream is = OkHttpUtil.getInputStream(uri)) {
 				if (is != null) {
 
 					BufferedImage img = ImageIO.read(is);
