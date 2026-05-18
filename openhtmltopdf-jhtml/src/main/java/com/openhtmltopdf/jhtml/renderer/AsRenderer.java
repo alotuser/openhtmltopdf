@@ -120,7 +120,7 @@ public class AsRenderer implements Closeable {
 		_objectDrawerFactory = state._objectDrawerFactory;
 		_outputDevice = new Java2DOutputDevice(state._layoutGraphics);
 
-		NaiveUserAgent uac = new AsUserAgent();
+		NaiveUserAgent uac = new AsUserAgent();//Java2DUserAgent is not used directly because we need to override getImageResource() to support OkHttpUtil for http/https resources.
 
 		uac.setProtocolsStreamFactory(state._streamFactoryMap);
 
