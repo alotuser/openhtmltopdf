@@ -67,10 +67,10 @@ import cn.alotus.core.util.StrUtil;
 public class JhtmlRender {
 
 	// Page width in the configured units (default value provided).
-	private Float pageWidth = 123f;
+	private Float pageWidth = null;
 
 	// Page height in the configured units (default value provided).
-	private Float pageHeight = 123f;
+	private Float pageHeight = null;
 
 	// Units for page size measurements (MM, PT, IN, etc.).
 	private PageSizeUnits units = AsRendererBuilder.PageSizeUnits.MM;
@@ -198,8 +198,9 @@ public class JhtmlRender {
 		builder.withHtmlContent(html, baseDocumentUri);
 
 		BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(imageType, scale);
-
-		builder.useDefaultPageSize(getPageWidth(), getPageHeight(), units);
+		if(pageHeight!=null&& pageWidth!=null) {
+			builder.useDefaultPageSize(getPageWidth(), getPageHeight(), units);
+		}
 		builder.useEnvironmentFonts(true);
 		builder.usePixelDimensions(usePx);
 		builder.useFastMode();
