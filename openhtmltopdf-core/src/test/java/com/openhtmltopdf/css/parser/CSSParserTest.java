@@ -1,6 +1,7 @@
 package com.openhtmltopdf.css.parser;
 
 import com.openhtmltopdf.css.sheet.PageRule;
+import com.openhtmltopdf.css.sheet.Ruleset;
 import com.openhtmltopdf.css.sheet.Stylesheet;
 import org.junit.Test;
 
@@ -41,4 +42,15 @@ public class CSSParserTest {
         assertTrue(stylesheet.getContents().get(0) instanceof PageRule);
     }
 
+    @Test
+    public void hsl_color() {
+        Stylesheet stylesheet = parseStylesheet("hsl_color.css");
+        assertEquals(8, stylesheet.getContents().size());
+        for (Object content : stylesheet.getContents()) {
+            Ruleset ruleset = (Ruleset) content;
+            assertEquals(1, ruleset.getPropertyDeclarations().size());
+            assertEquals("#60809f", ruleset.getPropertyDeclarations().get(0).getValue().getCssText());
+        }
+    }
+    
 }
