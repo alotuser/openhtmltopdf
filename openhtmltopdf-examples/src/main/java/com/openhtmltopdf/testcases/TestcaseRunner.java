@@ -53,76 +53,78 @@ public class TestcaseRunner {
 	 * If you only want to run one spefic test, you can specify
 	 * -DONLY_TEST=&lt;testname&gt;. I.e. -DONLY_TEST=adobe-borderstyle-bugs
 	 * 
+	 * @deprecated Use <code>TestcaseRunnerTest</code> to run testcases instead.
 	 */
+    @Deprecated
 	public static void main(String[] args) throws Exception {
 
-//		runTestCase("soft-hypen-oom");
-//
-//		/*
-//		 * Note: The RepeatedTableSample optionally requires the font file
-//		 * NotoSans-Regular.ttf to be placed in the resources directory.
-//		 * 
-//		 * This sample demonstrates the failing repeated table header on each page.
-//		 */
-//		runTestCase("RepeatedTableSample");
-//
-//		/*
-//		 * This sample demonstrates the -fs-pagebreak-min-height css property
-//		 */
-//		runTestCase("FSPageBreakMinHeightSample");
-//
-//		runTestCase("color");
-//		runTestCase("text-decoration");
-//		runTestCase("background-color");
-//		runTestCase("background-image");
-//		runTestCase("invalid-url-background-image");
-//		runTestCase("text-align");
-//		runTestCase("font-family-built-in");
-//		runTestCase("form-controls");
-//
-//		/*
-//		 * SVG samples
-//		 */
-//		runTestCase("svg-inline");
-//		runTestCase("svg-sizes");
-//
-//		/*
-//		 * Graphics2D Texterror Case
-//		 */
-//		runTestCase("moonbase");
+		runTestCase("soft-hypen-oom");
+
+		/*
+		 * Note: The RepeatedTableSample optionally requires the font file
+		 * NotoSans-Regular.ttf to be placed in the resources directory.
+		 * 
+		 * This sample demonstrates the failing repeated table header on each page.
+		 */
+		runTestCase("RepeatedTableSample");
+
+		/*
+		 * This sample demonstrates the -fs-pagebreak-min-height css property
+		 */
+		runTestCase("FSPageBreakMinHeightSample");
+
+		runTestCase("color");
+		runTestCase("text-decoration");
+		runTestCase("background-color");
+		runTestCase("background-image");
+		runTestCase("invalid-url-background-image");
+		runTestCase("text-align");
+		runTestCase("font-family-built-in");
+		runTestCase("form-controls");
+
+		/*
+		 * SVG samples
+		 */
+		runTestCase("svg-inline");
+		runTestCase("svg-sizes");
+
+		/*
+		 * Graphics2D Texterror Case
+		 */
+		runTestCase("moonbase");
 
 		/*
 		 * Custom Objects
 		 */
 		runTestCase("custom-objects");
 
-//		/*
-//		 * CSS3 multi-column layout
-//		 */
-//		runTestCase("multi-column-layout");
-//
-//		/*
-//		 * Adobe Borderyle Problem
-//		 */
-//		runTestCase("adobe-borderstyle-bugs");
-//
-//		/*
-//		 * CSS Transform Test
-//		 */
-//		runTestCase("transform");
-//
-//		runTestCase("simplerotate");
-//
-//		runTestCase("quoting");
-//
-//		runTestCase("math-ml");
-//
-//		runTestCase("latex-sample");
-//
-//		/*
-//		 * Broken rotate() on the second page
-//		 */
-//		runTestCase("RepeatedTableTransformSample");
+		/*
+		 * CSS3 multi-column layout
+		 */
+		runTestCase("multi-column-layout");
+
+		/*
+		 * Adobe Borderyle Problem
+		 */
+		runTestCase("adobe-borderstyle-bugs");
+
+		/*
+		 * CSS Transform Test
+		 */
+		runTestCase("transform");
+
+		runTestCase("simplerotate");
+
+		runTestCase("quoting");
+
+		runTestCase("math-ml");
+
+		runTestCase("latex-sample");
+
+		/*
+		 * Broken rotate() on the second page
+		 */
+		runTestCase("RepeatedTableTransformSample");
 
 		/* Add additional test cases here. */
 	}

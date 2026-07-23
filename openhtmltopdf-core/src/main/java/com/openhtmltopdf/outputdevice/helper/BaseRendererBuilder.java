@@ -445,14 +445,13 @@ public abstract class BaseRendererBuilder<TFinalClass extends BaseRendererBuilde
 	/**
 	 * Use the new (May 2018) fast renderer.
 	 * This renderer can be 100s of times faster for very large documents.
-	 * Please note that the fast renderer will be the only renderer at some future
-	 * release so please at least test your code using the fast mode.
-	 * 
-	 * Note: As of version 1.0.11 the fast renderer will be the only renderer
+	 *
+	 * @deprecated As of version 1.0.11 the fast renderer is the only renderer
 	 * and this method is not required.
 	 * 
 	 * @return this for method chaining
 	 */
+	@Deprecated
 	public final TFinalClass useFastMode() {
 	    return (TFinalClass) this;
 	}

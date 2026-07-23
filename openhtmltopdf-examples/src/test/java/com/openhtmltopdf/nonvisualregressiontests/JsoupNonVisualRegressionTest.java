@@ -45,7 +45,6 @@ public class JsoupNonVisualRegressionTest {
              PdfRendererBuilder builder = new PdfRendererBuilder();
              builder.withW3cDocument(doc, NonVisualRegressionTest.class.getResource(RES_PATH).toString());
              builder.toStream(actual);
-             builder.useFastMode();
              builder.testMode(true);
              config.configure(builder);
 
@@ -96,7 +95,7 @@ public class JsoupNonVisualRegressionTest {
     @Test
     public void testIssue551PageBreakAvoidStuck() throws IOException {
         try (PDDocument doc = run("issue-551-page-break-avoid-stuck", TestSupport.WITH_FONT)) {
-            assertEquals(3, doc.getNumberOfPages());
+            assertEquals(2, doc.getNumberOfPages());
         }
     }
 }

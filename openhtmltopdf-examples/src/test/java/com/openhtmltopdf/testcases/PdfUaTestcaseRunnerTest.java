@@ -45,7 +45,6 @@ public class PdfUaTestcaseRunnerTest {
 
         try (FileOutputStream os = new FileOutputStream("./target/test/manual/pdfua-test-cases/" + testCase + ".pdf")) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
             builder.testMode(true);
             builder.usePdfUaAccessibility(true);
             builder.useFont(new File("target/test/visual-tests/Karla-Bold.ttf"), "TestFont");

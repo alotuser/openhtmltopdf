@@ -58,7 +58,6 @@ public class VisualTester {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.withHtmlContent(html, VisualTester.class.getResource(this.resourcePath).toString());
         builder.toStream(actual);
-        builder.useFastMode();
         builder.testMode(true);
         config.configure(builder);
         try {

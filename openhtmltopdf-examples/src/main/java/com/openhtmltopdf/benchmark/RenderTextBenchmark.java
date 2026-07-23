@@ -107,7 +107,6 @@ public class RenderTextBenchmark {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.withHtmlContent(html, null);
         builder.toStream(actual);
-        builder.useFastMode();
         builder.testMode(true);
 
         builder.run();

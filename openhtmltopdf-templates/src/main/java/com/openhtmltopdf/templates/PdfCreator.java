@@ -13,7 +13,6 @@ public class PdfCreator {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.withHtmlContent(html, VisualTester.class.getResource(resourcePath).toString());
         builder.toStream(actual);
-        builder.useFastMode();
 
         for (Consumer<PdfRendererBuilder> conf : config) {
             conf.accept(builder);

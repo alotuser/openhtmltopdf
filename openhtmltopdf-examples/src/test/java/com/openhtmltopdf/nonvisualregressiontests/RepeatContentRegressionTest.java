@@ -124,7 +124,6 @@ public class RepeatContentRegressionTest {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.withHtmlContent(html, NonVisualRegressionTest.class.getResource(RES_PATH).toString());
         builder.toStream(actual);
-        builder.useFastMode();
         builder.testMode(true);
         config.configure(builder);
 

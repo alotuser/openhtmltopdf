@@ -60,7 +60,7 @@ public class Matcher {
      * parent's descendant selectors as their axes, so they share one index.
      */
     private final Map<List<Selector>, RuleIndex> _indexCache = new IdentityHashMap<>();
-    
+
     private final Set<Object> _hoverElements = new HashSet<>();
     private final Set<Object> _activeElements = new HashSet<>();
     private final Set<Object> _focusElements = new HashSet<>();
@@ -485,7 +485,7 @@ public class Matcher {
             return at + src.length;
         }
     }
-    
+
     /**
      * Mapper represents a local CSS for a Node that is used to match the Node's
      * children.
@@ -512,7 +512,7 @@ public class Matcher {
         private List<Selector> mergeChains;
         private int[] mergeChainPositions;
         private int mergeChainCount;
-        
+
         Mapper(Collection<Selector> selectors) {
             this.axes = new ArrayList<>(selectors);
             this.pseudoSelectors = Collections.emptyMap();
@@ -552,7 +552,7 @@ public class Matcher {
             }
             return axes;
         }
-        
+
         /**
          * Side effect: creates and stores a Mapper for the element
          *
@@ -566,7 +566,7 @@ public class Matcher {
 
             StringBuilder key = new StringBuilder();
 
-         // Read once per element and reused for every candidate selector.
+            // Read once per element and reused for every candidate selector.
             String elementName = _treeRes.getElementName(e);
             String elementId = _attRes != null ? _attRes.getID(e) : null;
             Set<String> elementClasses = classTokens(_attRes != null ? _attRes.getClass(e) : null);
@@ -646,14 +646,14 @@ public class Matcher {
                 } else if (chain.getAxis() == Selector.IMMEDIATE_SIBLING_AXIS) {
                     throw new RuntimeException();
                 } else {
-                	if (chainedSelectors == null) {
+                    if (chainedSelectors == null) {
                         chainedSelectors = new ArrayList<>();
                         chainedPositions = new int[8];
                     } else if (chainedCount == chainedPositions.length) {
                         chainedPositions = Arrays.copyOf(chainedPositions, chainedCount * 2);
                     }
 
-                	chainedSelectors.add(chain);
+                    chainedSelectors.add(chain);
                     chainedPositions[chainedCount++] = pos;
                 }
             }
@@ -796,3 +796,4 @@ public class Matcher {
         }
     }
 }
+

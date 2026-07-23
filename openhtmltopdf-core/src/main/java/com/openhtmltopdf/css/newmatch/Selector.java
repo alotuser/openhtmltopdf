@@ -149,7 +149,7 @@ public class Selector {
     String indexName() {
         return _name;
     }
-    
+
     /**
      * Check if the given Element matches this selector's dynamic properties.
      * Note: the parser should give all class
@@ -674,3 +674,4 @@ public class Selector {
         return sb.toString();
     }
 }
+

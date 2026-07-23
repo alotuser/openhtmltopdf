@@ -248,6 +248,7 @@ public class PdfBoxFastLinkManager {
 
                 PDAnnotationLink annot = new PDAnnotationLink();
                 annot.setAction(action);
+                setLinkAnnotationContents(annot, elem, uri);
 
                 AnnotationContainer annotContainer = new AnnotationContainer.PDAnnotationLinkContainer(annot);
 
@@ -267,6 +268,7 @@ public class PdfBoxFastLinkManager {
 
                 PDAnnotationLink annot = new PDAnnotationLink();
                 annot.setAction(uriAct);
+                setLinkAnnotationContents(annot, elem, uri);
 
                 annotContainer = new AnnotationContainer.PDAnnotationLinkContainer(annot);
             } else {
@@ -284,6 +286,26 @@ public class PdfBoxFastLinkManager {
 
                 addLinkToPage(linkDetails.page, annotContainer, linkDetails.box, null);
             }
+        }
+    }
+
+    /**
+     * Set the link annotation's /Contents entry so PDF/UA-1 (ISO 14289-1
+     * clause 7.18.5) is satisfied. Prefers the element's `title` attribute,
+     * falls back to the visible text, then to the URI itself, so every
+     * link annotation has an alternate description.
+     */
+    private static void setLinkAnnotationContents(PDAnnotationLink annot, Element elem, String uri) {
+        String contents = elem.getAttribute("title");
+        if (contents == null || contents.isEmpty()) {
+            contents = elem.getTextContent();
+        }
+        if (contents == null || contents.isEmpty()) {
+            contents = uri;
+        }
+        contents = contents.trim();
+        if (!contents.isEmpty()) {
+            annot.setContents(contents);
         }
     }
 

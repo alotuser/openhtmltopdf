@@ -59,7 +59,6 @@ public class NonVisualTestSupport {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.withHtmlContent(html, NonVisualRegressionTest.class.getResource(baseResPath).toString());
         builder.toStream(actual);
-        builder.useFastMode();
         builder.testMode(true);
         config.configure(builder);
 

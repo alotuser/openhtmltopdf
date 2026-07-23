@@ -306,7 +306,7 @@ public class TableCellBox extends BlockBox {
         }
         return -1;
     }
-    
+
     /**
      * Adjusts the bounds of a rowspan cell on continuation pages to avoid overlapping with thead.
      * For rowspan cells that span multiple pages, this ensures the cell's rendering starts
@@ -422,17 +422,17 @@ public class TableCellBox extends BlockBox {
             if (c.getPageNo() == contentLimitContainer.getInitialPageNo()) {
                 top = result.y;
             } else {
-            	 top = limit.getTop() - ((TableRowBox)getParent()).getExtraSpaceTop();
+                top = limit.getTop() - ((TableRowBox)getParent()).getExtraSpaceTop();
 
-                 // For a rowspan cell, the parent row's content limit tracks where the
-                 // cell's own content landed on this page rather than the top of the
-                 // table's content area, so anchor the cell to the repeated header instead.
-                 if (getStyle().getRowSpan() > 1) {
-                     int theadBottom = getTheadBottom(getTable());
-                     if (theadBottom != -1) {
-                         top = theadBottom;
-                     }
-                 }
+                // For a rowspan cell, the parent row's content limit tracks where the
+                // cell's own content landed on this page rather than the top of the
+                // table's content area, so anchor the cell to the repeated header instead.
+                if (getStyle().getRowSpan() > 1) {
+                    int theadBottom = getTheadBottom(getTable());
+                    if (theadBottom != -1) {
+                        top = theadBottom;
+                    }
+                }
             }
             
             int bottom;

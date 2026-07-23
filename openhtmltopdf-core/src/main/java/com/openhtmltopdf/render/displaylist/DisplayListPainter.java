@@ -168,7 +168,8 @@ public class DisplayListPainter {
         
         Object outerToken = c.getOutputDevice().startStructure(StructureType.REPLACED, replaced);
         // Clip to the rounded border so border-radius is honored for replaced content (e.g. images).
-        BorderPainter.paintClippedToBorderRadius(c, replaced,() -> c.getOutputDevice().paintReplacedElement(c, replaced));
+        BorderPainter.paintClippedToBorderRadius(c, replaced,
+                () -> c.getOutputDevice().paintReplacedElement(c, replaced));
         c.getOutputDevice().endStructure(outerToken);
     }
     

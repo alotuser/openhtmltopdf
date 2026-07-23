@@ -69,7 +69,6 @@ public class Slf4JLoggerTest {
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
 
-            builder.useFastMode();
             builder.toStream(os);
             builder.withHtmlContent("<html><body style=\"invalid-prop: 5;\">Test</body></html>", null);
             builder.run();

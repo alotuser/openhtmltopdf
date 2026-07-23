@@ -60,7 +60,6 @@ public class Java2DVisualTester {
     private BufferedImage runRendererSingle(String resourcePath, String html, Java2DBuilderConfig config) {
         Java2DRendererBuilder builder = new Java2DRendererBuilder();
         builder.withHtmlContent(html, Java2DVisualTester.class.getResource(this.resourcePath).toString());
-        builder.useFastMode();
         builder.testMode(true);
 
         BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(
@@ -86,7 +85,6 @@ public class Java2DVisualTester {
     private List<BufferedImage> runRendererPaged(String resourcePath, String html, Java2DBuilderConfig config) {
         Java2DRendererBuilder builder = new Java2DRendererBuilder();
         builder.withHtmlContent(html, Java2DVisualTester.class.getResource(this.resourcePath).toString());
-        builder.useFastMode();
         builder.testMode(true);
 
         BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(

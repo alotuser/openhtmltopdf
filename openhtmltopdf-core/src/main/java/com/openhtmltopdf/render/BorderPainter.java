@@ -88,7 +88,6 @@ public class BorderPainter {
         path.append(generateBorderShape(bounds, LEFT, border, false, inside ? 1 : 0, 1), true);
         return path;
     }
-    
 
     /**
      * Runs {@code painter} with the output device clipped to {@code box}'s rounded border

@@ -65,7 +65,6 @@ public class PdfATester {
         byte[] pdfBytes;
         
             PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
             //builder.testMode(true);
             builder.usePdfVersion(conform.getPart() == 1 ? 1.4f : 1.5f);
             builder.usePdfAConformance(conform);

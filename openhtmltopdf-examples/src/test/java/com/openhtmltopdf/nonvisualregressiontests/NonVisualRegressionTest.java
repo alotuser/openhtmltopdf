@@ -1,10 +1,12 @@
 package com.openhtmltopdf.nonvisualregressiontests;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.*;
 
 import java.awt.Color;
@@ -28,6 +30,8 @@ import org.apache.pdfbox.io.IOUtils;
 import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.PDPageContentStream.AppendMode;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationFileAttachment;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
@@ -39,6 +43,10 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlin
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDRadioButton;
 import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
+import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDObjectReference;
+import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDStructureElement;
+import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDStructureNode;
+import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDStructureTreeRoot;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.hamcrest.CustomTypeSafeMatcher;
 import org.junit.Assert;
@@ -76,7 +84,6 @@ public class NonVisualRegressionTest {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.withHtmlContent(html, NonVisualRegressionTest.class.getResource(RES_PATH).toString());
         builder.toStream(actual);
-        builder.useFastMode();
         builder.testMode(true);
         config.configure(builder);
 
@@ -211,6 +218,78 @@ public class NonVisualRegressionTest {
             assertEquals(doc.getPage(1).getMediaBox().getUpperRightY(), dest.getTop(), 1.0d);
 
             remove("bookmark-head-simple", doc);
+        }
+    }
+
+    /**
+     * Tests that target-counter(attr(href), page) prints the page where the target's
+     * content actually paints when the target block straddles a page break: the block's
+     * top edge lands in the last few pixels of page one, so its first line (and all
+     * of its content) is pushed to page two.
+     */
+    @Test
+    public void testTargetCounterPageStraddle() throws IOException {
+        try (PDDocument doc = run("target-counter-page-straddle")) {
+            assertEquals(2, doc.getNumberOfPages());
+
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setStartPage(1);
+            stripper.setEndPage(1);
+            String page1Text = stripper.getText(doc);
+
+            stripper.setStartPage(2);
+            stripper.setEndPage(2);
+            String page2Text = stripper.getText(doc);
+
+            // The target's content paints entirely on page two...
+            assertThat(page1Text, not(containsString("Target heading")));
+            assertThat(page2Text, containsString("Target heading"));
+
+            // ...so the link must print page two.
+            assertThat(page1Text, containsString("PAGE-2"));
+
+            remove("target-counter-page-straddle", doc);
+        }
+    }
+
+    /**
+     * Control case for {@link #testTargetCounterPageStraddle()}: the target does not
+     * straddle a page break, so target-counter prints the page of the target's top edge.
+     */
+    @Test
+    public void testTargetCounterPageControl() throws IOException {
+        try (PDDocument doc = run("target-counter-page-control")) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setStartPage(1);
+            stripper.setEndPage(1);
+            String page1Text = stripper.getText(doc);
+
+            assertThat(page1Text, containsString("Target heading"));
+            assertThat(page1Text, containsString("PAGE-1"));
+
+            remove("target-counter-page-control", doc);
+        }
+    }
+
+    /**
+     * Tests that a bookmark destination points at the page where the target's content
+     * actually paints when the target block straddles a page break (same geometry as
+     * {@link #testTargetCounterPageStraddle()}).
+     */
+    @Test
+    public void testBookmarkPageStraddle() throws IOException {
+        try (PDDocument doc = run("bookmark-page-straddle")) {
+            PDDocumentOutline outline = doc.getDocumentCatalog().getDocumentOutline();
+
+            PDOutlineItem bm = outline.getFirstChild();
+            assertThat(bm.getTitle(), equalTo("Test bookmark"));
+            assertThat(bm.getDestination(), instanceOf(PDPageXYZDestination.class));
+            PDPageXYZDestination dest = (PDPageXYZDestination) bm.getDestination();
+
+            // The target's content is pushed entirely to the second page.
+            assertEquals(doc.getPage(1), dest.getPage());
+
+            remove("bookmark-page-straddle", doc);
         }
     }
 
@@ -503,7 +582,7 @@ public class NonVisualRegressionTest {
             remove("form-control-on-second-page", doc);
         }
     }
-    
+
     /**
      * Check that an input without name attribute does not launch a NPE.
      * Will now log a warning message.
@@ -582,6 +661,27 @@ public class NonVisualRegressionTest {
         sb.append("   !FAILED!");
         sb.append("\n\n");
         return true;
+    }
+
+    @Test
+    public void testIssue64MissingGlyphIsReplaced() throws IOException {
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.useFont(
+                () -> NonVisualRegressionTest.class.getClassLoader().getResourceAsStream(
+                        "org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf"),
+                "Liberation Sans");
+        builder.withHtmlContent(
+                "<html><body style=\"font-family: 'Liberation Sans'\">A天B</body></html>",
+                null);
+        builder.toStream(actual);
+        builder.testMode(true);
+        builder.run();
+
+        try (PDDocument doc = Loader.loadPDF(actual.toByteArray())) {
+            String text = new PDFTextStripper().getText(doc).replaceAll("[\r\n]", "");
+            assertEquals("A#B", text);
+        }
     }
 
     /**
@@ -758,7 +858,6 @@ public class NonVisualRegressionTest {
 
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
             builder.toStream(os);
             builder.withHtmlContent(header + html + footer, null);
             if (useFont) {
@@ -891,7 +990,6 @@ public class NonVisualRegressionTest {
             PdfRendererBuilder builder = new PdfRendererBuilder();
 
             builder.withDiagnosticConsumer(logs::add);
-            builder.useFastMode();
             builder.toStream(os);
             builder.withHtmlContent("<html style=\"invalid-prop: invalid-val\"><body>TEST</body></html>", null);
             builder.run();
@@ -955,7 +1053,6 @@ public class NonVisualRegressionTest {
         PdfRendererBuilder builder = new PdfRendererBuilder();
 
         builder.withHtmlContent(html, null);
-        builder.useFastMode();
         builder.toStream(os);
 
         float lastContentLine;
@@ -1029,6 +1126,525 @@ public class NonVisualRegressionTest {
 
             remove("named-destinations-basic", doc);
         }
+    }
+
+    /**
+     * Tests that the PDF structure tree follows DOM order, not CSS paint order.
+     * CSS paints backgrounds first, then floats, then inlines - which differs
+     * from the DOM order. The structure tree must follow DOM order per
+     * PDF/UA-1 rule 7.4.2-1.
+     */
+    @Test
+    public void testStructureTreeFollowsDomOrder() throws IOException {
+        String html =
+            "<html lang='en'><head>" +
+            "<title>Structure Tree Ordering Test</title>" +
+            "<meta name='description' content='Test structure tree DOM ordering'/>" +
+            "<style>" +
+            "body { margin: 0; font-family: 'TestFont'; font-size: 12px; }" +
+            "</style></head><body>" +
+            "<h1>First</h1>" +
+            "<h2>Second</h2>" +
+            "<h3>Third</h3>" +
+            "</body></html>";
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(actual);
+        builder.testMode(true);
+        builder.usePdfUaAccessibility(true);
+        builder.useFont(() -> NonVisualRegressionTest.class.getClassLoader().getResourceAsStream(
+            "org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf"), "TestFont");
+        builder.run();
+
+        try (PDDocument doc = Loader.loadPDF(actual.toByteArray())) {
+            PDStructureTreeRoot root = doc.getDocumentCatalog().getStructureTreeRoot();
+            assertNotNull("Structure tree root should exist", root);
+
+            List<String> headingTags = new ArrayList<>();
+            collectStructureTags(root, headingTags, "H[1-6]");
+
+            assertEquals("Should find 3 headings", 3, headingTags.size());
+            assertEquals("First heading should be H1", "H1", headingTags.get(0));
+            assertEquals("Second heading should be H2", "H2", headingTags.get(1));
+            assertEquals("Third heading should be H3", "H3", headingTags.get(2));
+        }
+    }
+
+    /**
+     * Recursively collects structure element tags matching the given regex pattern
+     * in document order from the PDF structure tree.
+     */
+    private static void collectStructureTags(PDStructureNode node, List<String> tags, String pattern) {
+        for (Object kid : node.getKids()) {
+            if (kid instanceof PDStructureElement) {
+                PDStructureElement elem = (PDStructureElement) kid;
+                String tag = elem.getStructureType();
+                if (tag != null && tag.matches(pattern)) {
+                    tags.add(tag);
+                }
+                collectStructureTags(elem, tags, pattern);
+            }
+        }
+    }
+
+    /**
+     * Tests that links inside running footers get proper /Link structure elements
+     * instead of being completely hidden inside pagination artifacts (PDF/UA-1 §7.18).
+     */
+    @Test
+    public void testRunningFooterLinksGetLinkStructureElements() throws IOException {
+        String html =
+            "<html lang='en'><head>" +
+            "<title>Running Footer Link Test</title>" +
+            "<meta name='description' content='Test running footer links'/>" +
+            "<style>" +
+            "@page { @bottom-center { content: element(footer); } margin-bottom: 50px; }" +
+            "body { margin: 0; font-family: 'TestFont'; font-size: 12px; }" +
+            "#footer { position: running(footer); }" +
+            "</style></head><body>" +
+            "<div id='footer'><p>Contact: <a href='tel:+1234567890' title='Call us'>+1 234 567 890</a></p></div>" +
+            "<p>Page content</p>" +
+            "</body></html>";
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(actual);
+        builder.testMode(true);
+        builder.usePdfUaAccessibility(true);
+        builder.useFont(() -> NonVisualRegressionTest.class.getClassLoader().getResourceAsStream(
+            "org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf"), "TestFont");
+        builder.run();
+
+        try (PDDocument doc = Loader.loadPDF(actual.toByteArray())) {
+            PDStructureTreeRoot root = doc.getDocumentCatalog().getStructureTreeRoot();
+            assertNotNull("Structure tree root should exist", root);
+
+            // Find /Link structure elements in the tree.
+            List<PDStructureElement> linkElements = new ArrayList<>();
+            collectLinkStructureElements(root, linkElements);
+            assertFalse("Should find at least one /Link structure element", linkElements.isEmpty());
+
+            // Verify the /Link element has both an OBJR kid (annotation) and content (MCID).
+            PDStructureElement linkElem = linkElements.get(0);
+            boolean hasObjr = false;
+            boolean hasContent = false;
+            for (Object kid : linkElem.getKids()) {
+                if (kid instanceof PDObjectReference) {
+                    hasObjr = true;
+                } else {
+                    hasContent = true;
+                }
+            }
+            assertTrue("/Link should have an OBJR kid (annotation reference)", hasObjr);
+            assertTrue("/Link should have tagged content (MCID)", hasContent);
+        }
+    }
+
+    private static void collectLinkStructureElements(PDStructureNode node, List<PDStructureElement> result) {
+        for (Object kid : node.getKids()) {
+            if (kid instanceof PDStructureElement) {
+                PDStructureElement elem = (PDStructureElement) kid;
+                if ("Link".equals(elem.getStructureType())) {
+                    result.add(elem);
+                }
+                collectLinkStructureElements(elem, result);
+            }
+        }
+    }
+
+    /**
+     * Diagnostic test: verifies the link annotation rectangle for a running footer link
+     * is positioned within the bottom margin area of the page (not at y=0 or in the content area).
+     */
+    @Test
+    public void testRunningFooterLinkAnnotationPosition() throws IOException {
+        String html =
+            "<html lang='en'><head>" +
+            "<title>Link Position Test</title>" +
+            "<meta name='description' content='Test link position'/>" +
+            "<style>" +
+            "@page { size: 200px 400px; margin: 20px 10px 60px 10px; " +
+            "  @bottom-center { content: element(footer); } }" +
+            "body { margin: 0; font-family: 'TestFont'; font-size: 12px; }" +
+            "#footer { position: running(footer); }" +
+            "</style></head><body>" +
+            "<div id='footer'><a href='https://example.com' title='Example'>Click here</a></div>" +
+            "<p>Body text</p>" +
+            "</body></html>";
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(actual);
+        builder.testMode(true);
+        builder.usePdfUaAccessibility(true);
+        builder.useFont(() -> NonVisualRegressionTest.class.getClassLoader().getResourceAsStream(
+            "org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf"), "TestFont");
+        builder.run();
+
+        try (PDDocument doc = Loader.loadPDF(actual.toByteArray())) {
+            PDPage page = doc.getPage(0);
+            List<PDAnnotation> annots = page.getAnnotations();
+            assertFalse("Should have at least one annotation", annots.isEmpty());
+
+            PDAnnotationLink linkAnnot = null;
+            for (PDAnnotation a : annots) {
+                if (a instanceof PDAnnotationLink) {
+                    linkAnnot = (PDAnnotationLink) a;
+                    break;
+                }
+            }
+            assertNotNull("Should find a link annotation", linkAnnot);
+
+            PDRectangle rect = linkAnnot.getRectangle();
+            // Page is 400px = 300pt, bottom margin is 60px = 45pt.
+            // The entire link rect should fit inside the bottom margin band (y=0 to ~45pt).
+            float bottomMarginPt = 45f;
+            assertTrue("Link bottom y=" + rect.getLowerLeftY() + " should be > 0",
+                rect.getLowerLeftY() > 0);
+            assertTrue("Link top y=" + rect.getUpperRightY() + " should be in bottom margin (< " + bottomMarginPt + ")",
+                rect.getUpperRightY() < bottomMarginPt);
+            assertTrue("Link should have positive dimensions",
+                rect.getHeight() > 0 && rect.getWidth() > 0);
+        }
+    }
+
+    /**
+     * Tests that running footer links work correctly across multiple pages.
+     * The /Link structure element should be reused (not duplicated) and each page
+     * should have its own link annotation connected via OBJR.
+     */
+    @Test
+    public void testRunningFooterLinkAcrossMultiplePages() throws IOException {
+        String html =
+            "<html lang='en'><head>" +
+            "<title>Multi-page Footer Link Test</title>" +
+            "<meta name='description' content='Test multi-page footer links'/>" +
+            "<style>" +
+            "@page { size: 200px 200px; margin: 10px 10px 40px 10px; " +
+            "  @bottom-center { content: element(footer); } }" +
+            "body { margin: 0; font-family: 'TestFont'; font-size: 12px; }" +
+            "#footer { position: running(footer); }" +
+            ".break { page-break-before: always; }" +
+            "</style></head><body>" +
+            "<div id='footer'><a href='tel:+1234567890' title='Call us'>+1 234 567 890</a></div>" +
+            "<p>Page 1</p>" +
+            "<p class='break'>Page 2</p>" +
+            "</body></html>";
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(actual);
+        builder.testMode(true);
+        builder.usePdfUaAccessibility(true);
+        builder.useFont(() -> NonVisualRegressionTest.class.getClassLoader().getResourceAsStream(
+            "org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf"), "TestFont");
+        builder.run();
+
+        try (PDDocument doc = Loader.loadPDF(actual.toByteArray())) {
+            assertEquals("Should have 2 pages", 2, doc.getNumberOfPages());
+
+            PDStructureTreeRoot root = doc.getDocumentCatalog().getStructureTreeRoot();
+            assertNotNull("Structure tree root should exist", root);
+
+            // There should be exactly one /Link structure element (reused across pages).
+            List<PDStructureElement> linkElements = new ArrayList<>();
+            collectLinkStructureElements(root, linkElements);
+            assertEquals("Should have exactly one /Link element (reused)", 1, linkElements.size());
+
+            // The /Link should have OBJRs for both pages' annotations.
+            PDStructureElement linkElem = linkElements.get(0);
+            int objrCount = 0;
+            for (Object kid : linkElem.getKids()) {
+                if (kid instanceof PDObjectReference) {
+                    objrCount++;
+                }
+            }
+            assertEquals("Should have 2 OBJRs (one per page)", 2, objrCount);
+
+            // Both pages should have link annotations.
+            for (int i = 0; i < 2; i++) {
+                List<PDAnnotation> annots = doc.getPage(i).getAnnotations();
+                boolean hasLink = false;
+                for (PDAnnotation a : annots) {
+                    if (a instanceof PDAnnotationLink) {
+                        hasLink = true;
+                        break;
+                    }
+                }
+                assertTrue("Page " + (i + 1) + " should have a link annotation", hasLink);
+            }
+        }
+    }
+
+    /**
+     * Tests that multiple links in a single running footer each get their own
+     * /Link structure element. Exercises the anchor-switching path in
+     * ensureRunningLinkStructure when _runningLinkDomElement changes.
+     */
+    @Test
+    public void testRunningFooterMultipleLinks() throws IOException {
+        String html =
+            "<html lang='en'><head>" +
+            "<title>Multiple Footer Links Test</title>" +
+            "<meta name='description' content='Test multiple footer links'/>" +
+            "<style>" +
+            "@page { size: 200px 200px; margin: 10px 10px 50px 10px; " +
+            "  @bottom-center { content: element(footer); } }" +
+            "body { margin: 0; font-family: 'TestFont'; font-size: 10px; }" +
+            "#footer { position: running(footer); }" +
+            "</style></head><body>" +
+            "<div id='footer'>" +
+            "  <a href='tel:+123' title='Phone'>Phone</a>" +
+            "  <a href='mailto:a@b.c' title='Email'>Email</a>" +
+            "</div>" +
+            "<p>Content</p>" +
+            "</body></html>";
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(actual);
+        builder.testMode(true);
+        builder.usePdfUaAccessibility(true);
+        builder.useFont(() -> NonVisualRegressionTest.class.getClassLoader().getResourceAsStream(
+            "org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf"), "TestFont");
+        builder.run();
+
+        try (PDDocument doc = Loader.loadPDF(actual.toByteArray())) {
+            PDStructureTreeRoot root = doc.getDocumentCatalog().getStructureTreeRoot();
+            assertNotNull(root);
+
+            List<PDStructureElement> linkElements = new ArrayList<>();
+            collectLinkStructureElements(root, linkElements);
+            assertEquals("Should find 2 /Link structure elements", 2, linkElements.size());
+
+            // Each /Link should have both content (MCID) and annotation (OBJR).
+            for (int i = 0; i < linkElements.size(); i++) {
+                boolean hasObjr = false;
+                boolean hasContent = false;
+                for (Object kid : linkElements.get(i).getKids()) {
+                    if (kid instanceof PDObjectReference) {
+                        hasObjr = true;
+                    } else {
+                        hasContent = true;
+                    }
+                }
+                assertTrue("/Link " + (i + 1) + " should have OBJR", hasObjr);
+                assertTrue("/Link " + (i + 1) + " should have content", hasContent);
+            }
+        }
+    }
+
+    /**
+     * Tests that an image inside a link in a running footer gets a proper /Figure
+     * structure element (with alt text) nested under /Link, not a plain GenericContentItem.
+     * Exercises createRunningLinkFigureItem (StructureType.REPLACED path).
+     */
+    @Test
+    public void testRunningFooterImageLinkGetsFigureStructure() throws IOException {
+        String html =
+            "<html lang='en'><head>" +
+            "<title>Image Link Footer Test</title>" +
+            "<meta name='description' content='Test image link in footer'/>" +
+            "<style>" +
+            "@page { size: 200px 200px; margin: 10px 10px 50px 10px; " +
+            "  @bottom-center { content: element(footer); } }" +
+            "body { margin: 0; font-family: 'TestFont'; font-size: 10px; }" +
+            "#footer { position: running(footer); }" +
+            "</style></head><body>" +
+            "<div id='footer'><a href='https://example.com' title='Logo link'>" +
+            "<img src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' " +
+            "alt='Logo' style='width:10px;height:10px;'/> Home</a></div>" +
+            "<p>Content</p>" +
+            "</body></html>";
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(actual);
+        builder.testMode(true);
+        builder.usePdfUaAccessibility(true);
+        builder.useFont(() -> NonVisualRegressionTest.class.getClassLoader().getResourceAsStream(
+            "org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf"), "TestFont");
+        builder.run();
+
+        try (PDDocument doc = Loader.loadPDF(actual.toByteArray())) {
+            PDStructureTreeRoot root = doc.getDocumentCatalog().getStructureTreeRoot();
+            assertNotNull(root);
+
+            // Find /Link structure elements.
+            List<PDStructureElement> linkElements = new ArrayList<>();
+            collectLinkStructureElements(root, linkElements);
+            assertEquals("Should find exactly one /Link", 1, linkElements.size());
+
+            PDStructureElement linkElem = linkElements.get(0);
+            // /Link should have an OBJR kid (annotation reference).
+            boolean hasObjr = false;
+            // /Link should have a /Figure child structure element (not just a generic content item).
+            boolean hasFigureChild = false;
+            for (Object kid : linkElem.getKids()) {
+                if (kid instanceof PDObjectReference) {
+                    hasObjr = true;
+                } else if (kid instanceof PDStructureElement) {
+                    PDStructureElement childElem = (PDStructureElement) kid;
+                    if ("Figure".equals(childElem.getStructureType())) {
+                        hasFigureChild = true;
+                        // Figure should have alt text.
+                        assertNotNull("Figure should have alt text",
+                            childElem.getAlternateDescription());
+                        assertFalse("Figure alt text should not be empty",
+                            childElem.getAlternateDescription().isEmpty());
+                    }
+                }
+            }
+            assertTrue("/Link should have OBJR", hasObjr);
+            assertTrue("/Link should have /Figure child with alt text", hasFigureChild);
+        }
+    }
+
+    /**
+     * Tests that a running footer link with multiple text nodes (e.g. icon + label)
+     * reuses the same /Link structure via the cache (exercises _runningLinkCache hit path).
+     */
+    @Test
+    public void testRunningFooterLinkMultipleSpansReusesStructure() throws IOException {
+        String html =
+            "<html lang='en'><head>" +
+            "<title>Multi-span Link Footer Test</title>" +
+            "<meta name='description' content='Test multi-span link'/>" +
+            "<style>" +
+            "@page { size: 200px 200px; margin: 10px 10px 50px 10px; " +
+            "  @bottom-center { content: element(footer); } }" +
+            "body { margin: 0; font-family: 'TestFont'; font-size: 10px; }" +
+            "#footer { position: running(footer); }" +
+            "</style></head><body>" +
+            "<div id='footer'><a href='tel:+123' title='Call'>" +
+            "<span>Icon</span> <span>Call us</span></a></div>" +
+            "<p>Content</p>" +
+            "</body></html>";
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(actual);
+        builder.testMode(true);
+        builder.usePdfUaAccessibility(true);
+        builder.useFont(() -> NonVisualRegressionTest.class.getClassLoader().getResourceAsStream(
+            "org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf"), "TestFont");
+        builder.run();
+
+        try (PDDocument doc = Loader.loadPDF(actual.toByteArray())) {
+            PDStructureTreeRoot root = doc.getDocumentCatalog().getStructureTreeRoot();
+            assertNotNull(root);
+
+            // Should still be exactly one /Link (structure reused for both spans).
+            List<PDStructureElement> linkElements = new ArrayList<>();
+            collectLinkStructureElements(root, linkElements);
+            assertEquals("Should find exactly one /Link (reused)", 1, linkElements.size());
+
+            // The /Link should have multiple content kids (one per text node) plus OBJR.
+            PDStructureElement linkElem = linkElements.get(0);
+            int contentKids = 0;
+            boolean hasObjr = false;
+            for (Object kid : linkElem.getKids()) {
+                if (kid instanceof PDObjectReference) {
+                    hasObjr = true;
+                } else {
+                    contentKids++;
+                }
+            }
+            assertTrue("/Link should have OBJR", hasObjr);
+            assertTrue("/Link should have multiple content kids (>1)", contentKids > 1);
+        }
+    }
+
+    /**
+     * Tests that headings split across page breaks preserve correct reading order
+     * in the structure tree. Page breaks create new branches in the structure tree,
+     * but the heading order must remain H1 → H2 → H3 regardless of page boundaries.
+     */
+    @Test
+    public void testHeadingsAcrossPageBreaksPreserveOrder() throws IOException {
+        String html =
+            "<html lang='en'><head>" +
+            "<title>Headings Across Pages Test</title>" +
+            "<meta name='description' content='Test heading order across page breaks'/>" +
+            "<style>" +
+            "@page { size: 200px 200px; margin: 10px; }" +
+            "body { margin: 0; font-family: 'TestFont'; font-size: 12px; }" +
+            "</style></head><body>" +
+            "<h1>First heading</h1>" +
+            "<p>Some content on page one.</p>" +
+            "<h2 style='page-break-before: always;'>Second heading on page two</h2>" +
+            "<p>Content on page two.</p>" +
+            "<h3 style='page-break-before: always;'>Third heading on page three</h3>" +
+            "<p>Content on page three.</p>" +
+            "</body></html>";
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(actual);
+        builder.testMode(true);
+        builder.usePdfUaAccessibility(true);
+        builder.useFont(() -> NonVisualRegressionTest.class.getClassLoader().getResourceAsStream(
+            "org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf"), "TestFont");
+        builder.run();
+
+        try (PDDocument doc = Loader.loadPDF(actual.toByteArray())) {
+            assertEquals("Should have 3 pages", 3, doc.getNumberOfPages());
+
+            PDStructureTreeRoot root = doc.getDocumentCatalog().getStructureTreeRoot();
+            assertNotNull("Structure tree root should exist", root);
+
+            List<String> headingTags = new ArrayList<>();
+            collectStructureTags(root, headingTags, "H[1-6]");
+
+            assertEquals("Should find 3 headings", 3, headingTags.size());
+            assertEquals("First heading should be H1", "H1", headingTags.get(0));
+            assertEquals("Second heading should be H2", "H2", headingTags.get(1));
+            assertEquals("Third heading should be H3", "H3", headingTags.get(2));
+        }
+    }
+
+    /**
+     * Verifies CSS font-family matching is case-insensitive. A font
+     * registered as "Karla" must be selected when CSS asks for "karla"
+     * (any case).
+     */
+    @Test
+    public void testFontFamilyCaseInsensitive() throws IOException {
+        TestSupport.makeFontFiles();
+
+        String html = "<html><body style='font-family: karla'>Hello case insensitive font</body></html>";
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(baos);
+        builder.testMode(true);
+        builder.useFont(new File("target/test/visual-tests/Karla-Bold.ttf"), "Karla");
+        builder.run();
+
+        boolean karlaEmbedded = false;
+        try (PDDocument doc = Loader.loadPDF(baos.toByteArray())) {
+            for (PDPage page : doc.getPages()) {
+                for (COSName fontKey : page.getResources().getFontNames()) {
+                    PDFont font = page.getResources().getFont(fontKey);
+                    if (font != null && font.getName() != null &&
+                        font.getName().toLowerCase(Locale.ROOT).contains("karla")) {
+                        karlaEmbedded = true;
+                        break;
+                    }
+                }
+                if (karlaEmbedded) break;
+            }
+        }
+        assertTrue("Karla must be selected when CSS font-family is lowercase 'karla'", karlaEmbedded);
     }
 
     // TODO:

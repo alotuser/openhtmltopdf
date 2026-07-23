@@ -21,7 +21,6 @@ public class ProfilingCaseRunner {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.withHtmlContent(html, PerformanceCaseGenerator.class.getResource("/").toExternalForm());
         builder.toStream(baos);
-        builder.useFastMode();
         builder.run();
         long end = System.currentTimeMillis();
         
