@@ -1093,12 +1093,12 @@ public class BlockBox extends Box {
             if (id != null) {
                 c.addBoxId(id, this);
             }
+            // 7G:add JHTML_BOX_ID 
+    		String jid = c.getNamespaceHandler().getAttributeValue(getElement(), JHTML_BOX_ID);
+    		if (jid != null) {
+    			c.addBoxId(jid, this);
+    		}
         }
-		// 7G:add JHTML_BOX_ID 
-		String id = c.getNamespaceHandler().getAttributeValue(getElement(), JHTML_BOX_ID);
-		if (id != null) {
-			c.addBoxId(id, this);
-		}
     }
 
     public void layout(LayoutContext c) {
