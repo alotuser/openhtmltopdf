@@ -1595,11 +1595,6 @@ public class BlockBox extends Box {
                     MarginCollapseResult collapsedMargin = new MarginCollapseResult();
                     collapseBottomMargin(c, true, collapsedMargin);
 
-					// 7G fix: more correct to use the collapsed margin of the body box, not the current box
-					if(isBody()) {
-						collapsedMargin = new MarginCollapseResult();
-						collapsedMargin.update((int) margin.bottom());
-					}
                     setCollapsedBottomMargin(c, margin, collapsedMargin);
                 }
             }

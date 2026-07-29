@@ -980,7 +980,40 @@ public class VisualRegressionTest {
     }
     
     /**
-     * Tests that we correctly render PDF pages in the img tag at 
+     * Tests that SVGs used as a CSS image, ie. as a <code>background-image</code>, render as
+     * vector art, whether they arrive as a percent encoded data uri, a base 64 data uri or
+     * unencoded markup. Also covers background-repeat, background-size and background-position,
+     * and that the containing page does not style the image. Issue 32.
+     */
+    @Test
+    public void testSvgCssBackgroundImage() throws IOException {
+        assertTrue(vt.runTest("svg-css-background-image", TestSupport.WITH_SVG));
+    }
+
+    /**
+     * Tests that a SVG without a size of its own - written in percentages, or with only a
+     * viewBox, as icons usually are - is sized from CSS rather than from some made up default,
+     * the way a browser sizes such a background image. Issue 32.
+     */
+    @Test
+    public void testSvgCssBackgroundImageUnsized() throws IOException {
+        assertTrue(vt.runTest("svg-css-background-image-unsized", TestSupport.WITH_SVG));
+    }
+
+    /**
+     * Tests that a linked SVG file works as a CSS image too, both as a background-image
+     * and as a list-style-image. Issue 32.
+     */
+    @Test
+    public void testSvgCssBackgroundImageLinked() throws IOException {
+        assertTrue(vt.runTest("svg-css-background-image-linked", builder -> {
+            TestSupport.WITH_FONT.configure(builder);
+            TestSupport.WITH_SVG.configure(builder);
+        }));
+    }
+
+    /**
+     * Tests that we correctly render PDF pages in the img tag at
      * the correct CSS specified sizing. Issue 344.
      */
     @Test
@@ -1718,6 +1751,35 @@ public class VisualRegressionTest {
     public void testTargetCounterFloat() throws IOException {
         // Embedded font: see testTargetCounterCustomAttr.
         assertTrue(vt.runTest("target-counter-float", TestSupport.WITH_FONT));
+    }
+
+    /**
+     * Tests an invoice whose item table spans multiple pages: the thead with
+     * the brought forward row and the tfoot with the carried forward row have
+     * to be repeated on every page, while the letterhead and the grand total
+     * table appear once.
+     * <p>
+     * The carry over amounts themselves are still blank: the cells ask for
+     * them with content: attr(data-running-sum), but attr() resolves against
+     * the cell itself, which has no such attribute. This pins that behaviour
+     * until a page aware running attribute function exists.
+     */
+    @Test
+    public void testInvoiceMultiPage() throws IOException {
+        assertTrue(vt.runTest("invoice-multi-page", TestSupport.WITH_FONT));
+    }
+
+    /**
+     * Tests that borders set on rows and row groups take part in the border
+     * conflict resolution of the collapsing borders model: all four edges of a
+     * row and of a row group, the edges shared by two rows and by two row
+     * groups, a cell border winning against an equally wide row border and a
+     * hidden row border suppressing the cell border. Borders on rows must
+     * still be ignored in the separated borders model. Issue 34.
+     */
+    @Test
+    public void testTableRowBorders() throws IOException {
+        assertTrue(vt.runTest("issue-34-table-row-borders"));
     }
 
     // TODO:
