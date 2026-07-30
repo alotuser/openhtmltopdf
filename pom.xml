@@ -7,7 +7,7 @@
 
 	<groupId>com.github.alotuser</groupId>
 	<artifactId>openhtmltopdf-parent</artifactId>
-	<version>1.0.1</version>
+	<version>1.7.7</version>
 	<inceptionYear>2004</inceptionYear>
 
 	<packaging>pom</packaging>
@@ -24,7 +24,7 @@
 	</licenses>
 
 	<properties>
-		<revision>1.0.0</revision> <!-- only used for local development,overriden in github actions -->
+		<revision>1.7.7</revision> <!-- only used for local development,overriden in github actions -->
 		<open.batik.version>1.19</open.batik.version>
 
 		<!-- Please keep xmlgraphics-commons up to date with batik. -->
