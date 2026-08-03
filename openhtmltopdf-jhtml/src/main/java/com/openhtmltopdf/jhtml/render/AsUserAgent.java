@@ -16,7 +16,9 @@ import com.openhtmltopdf.outputdevice.helper.ExternalResourceType;
 import com.openhtmltopdf.resource.ImageResource;
 import com.openhtmltopdf.util.LogMessageId;
 import com.openhtmltopdf.util.XRLog;
-
+/**
+ * Java2DUserAgent is not used directly because we need to override getImageResource() to support OkHttpUtil for http/https resources.
+ */
 public class AsUserAgent extends Java2DUserAgent {
 
 	@Override

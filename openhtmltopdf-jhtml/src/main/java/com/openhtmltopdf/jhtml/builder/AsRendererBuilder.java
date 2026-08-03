@@ -37,6 +37,22 @@ public class AsRendererBuilder extends BaseRendererBuilder<AsRendererBuilder, co
 		return this;
 	}
 	/**
+	 * Whether fonts used by this renderer may be taken from and put into the process wide
+	 * {@link com.openhtmltopdf.outputdevice.helper.FontCache}. Caching is on by default and
+	 * avoids leaking memory, as every font created with {@link Font#createFont(int, java.io.File)}
+	 * stays registered with the JDK font manager forever.
+	 *
+	 * <p>Fonts added with {@link #useFont(java.io.File, String)} are reloaded when the file
+	 * changes, so caching only has to be turned off for fonts whose content changes behind a
+	 * stable URI. {@link com.openhtmltopdf.outputdevice.helper.FontCache#invalidateAll()} can be
+	 * used to drop such fonts instead.</p>
+	 */
+	public AsRendererBuilder cacheFonts(boolean cacheFonts) {
+		state._cacheFonts = cacheFonts;
+		return this;
+	}
+	
+	/**
 	 * Pixel Dimensions is the size parameter of an exponential character image in two-dimensional space, usually represented in two dimensions: length and width, with units of pixels (px). For example, the pixel dimension of a photo may be labeled as "1920 × 1080", indicating that it contains 1920 pixels in the length direction and 1080 pixels in the width direction.
 	 * @param usePixelDimensions
 	 * @return
@@ -45,8 +61,7 @@ public class AsRendererBuilder extends BaseRendererBuilder<AsRendererBuilder, co
 		state._usePixelDimensions = usePixelDimensions;
 		return this;
 	}
-	
-	
+
 	/**
 	 * Render everything to a single page. I.e. only one big page is genereated, no pagebreak will be done. The page is only as height as needed.
 	 */
@@ -133,6 +148,7 @@ public class AsRendererBuilder extends BaseRendererBuilder<AsRendererBuilder, co
 		public FSPageProcessor _pageProcessor;
 		public boolean _useEnvironmentFonts = false;
 		public boolean _usePixelDimensions  = false;
+		public boolean _cacheFonts = true;
 	}
 
 }
