@@ -488,7 +488,26 @@ public class TextVisualRegressionTest {
     public void testContentPageNumbers() throws IOException {
         assertTrue(run("content-page-numbers"));
     }
-    
+
+    /**
+     * Tests that the page counter is not broken across lines by a container narrower than the
+     * placeholder it is laid out with, which would paint the page number once per fragment.
+     */
+    @Test
+    public void testContentPageNumberNarrowContainer() throws IOException {
+        assertTrue(run("content-page-number-narrow-container"));
+    }
+
+    /**
+     * Tests that a content function which is calculated at layout, such as target-text, still
+     * breaks like ordinary text. Unlike the page counter it is laid out with its real value
+     * rather than a placeholder, so there is nothing that has to stay on one line.
+     */
+    @Test
+    public void testContentTargetTextNarrowContainer() throws IOException {
+        assertTrue(run("content-target-text-narrow-container"));
+    }
+
     /**
      * Tests a typical table-of-contents setup with leader function, attr function and target-counter function.
      * With overflow page in the middle.
@@ -735,5 +754,18 @@ public class TextVisualRegressionTest {
             TestSupport.WITH_FONT.configure(builder);
             builder.useFont(new File("target/test/visual-tests/NotoSansJP-Regular.ttf"), "notosansjp");
         }));
+    }
+
+    /**
+     * Tests that <code>line-height: normal</code> includes the line gap the font asks
+     * for, as browsers do. The two blocks are set in the same font, one of which asks
+     * for a line gap of a fifth of an em: its lines must be that much further apart,
+     * with the extra space split evenly above and below each line.
+     *
+     * @see <a href="https://github.com/openhtmltopdf/openhtmltopdf/issues/42">Issue 42</a>
+     */
+    @Test
+    public void testLineHeightNormalLineGap() throws IOException {
+        assertTrue(vtester.runTest("line-height-normal-line-gap", TestSupport.WITH_LINE_GAP_FONT));
     }
 }
