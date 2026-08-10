@@ -43,7 +43,8 @@
 			<!-- NOTE: VeraPDF is licensed under the GPL or MPL. -->
 			<groupId>org.verapdf</groupId>
 			<artifactId>validation-model</artifactId>
-			<version>1.18.8</version>
+			<version>1.30.2</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
