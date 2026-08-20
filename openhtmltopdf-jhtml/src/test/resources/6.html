@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>自适应商品价签</title>
+<style type="text/css">
+
+
+@page {
+    margin: 0;
+    padding: 0;
+}
+
+/* 基础样式重置 */
+html, body, div, h1, p, span {
+    margin: 0;
+    padding: 0;
+}
+html, body {
+    width: 800px;
+    height: 480px;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #fff; /* 白色背景 */
+    color: #000; /* 黑色文字 */
+}
+
+div img {
+	float: left;
+}
+ 
+
+img:nth-child(1) {
+	width: 400px;
+	height: 400px;
+	margin-top: 20px;
+	margin-left: 0px;
+}
+
+img:nth-child(2) {
+	width: 200px;
+	height: 200px;
+	    
+	margin-top: 20px;
+	margin-left: 0px;
+}
+
+img:nth-child(3) {
+	width: 200px;
+	height: 200px;
+	 
+ 
+	margin-top: 250px;
+	margin-left: 0px;
+}
+
+</style>
+</head>
+
+<body>
+<div class="price-tag-container">
+  
+<!--	
+	**data-palette-mode**
+	`BW` / `BWR` / `BWY` / `BWRY` / `BWRYGBO`
+
+	**data-dither-kernel**
+	`FLOYD_STEINBERG` / `SIERRA_LITE` / `ATKINSON`
+-->
+	
+    <img data-palette-mode="BWRYGBO"  data-dither-kernel="FLOYD_STEINBERG" src="https://192.168.1.74/res/storeImg/2072249007708643328/2072249008664944642/20260817/d9136739bc034409a842446776e2ee5d.jpg" alt="商品图片"/>
+    
+	<img data-palette-mode="BWRYGBO"  data-dither-kernel="SIERRA_LITE" src="https://192.168.1.74/res/storeImg/2072249007708643328/2072249008664944642/20260817/d9136739bc034409a842446776e2ee5d.jpg" alt="商品图片"  />
+
+	<img data-palette-mode="BWRYGBO"  data-dither-kernel="ATKINSON" src="https://192.168.1.74/res/storeImg/2072249007708643328/2072249008664944642/20260817/d9136739bc034409a842446776e2ee5d.jpg" alt="商品图片"  />
+		  
+	
+	 
+</div>
+
+</body>
+</html>
