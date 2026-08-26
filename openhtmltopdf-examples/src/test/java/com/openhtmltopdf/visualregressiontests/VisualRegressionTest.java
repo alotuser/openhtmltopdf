@@ -1158,8 +1158,6 @@ public class VisualRegressionTest {
      * https://github.com/danfickle/openhtmltopdf/issues/202
      */
     @Test
-    @Ignore // Has both problems. Low priority as very few people want their thead
-            // broken over two or more pages.
     public void testIssue202PaginatedTableAllowBreakThead() throws IOException {
         assertTrue(vt.runTest("issue-202-paginated-table-allow-break-thead"));
     }
@@ -1180,6 +1178,18 @@ public class VisualRegressionTest {
     @Test
     public void testPaginatedTableMutliPageRow() throws IOException {
         assertTrue(vt.runTest("paginated-table-multi-page-row"));
+    }
+
+    /**
+     * Tests that a paginated table escalated to the next page because its thead
+     * straddles the page boundary lays out with natural heights: the running-header
+     * trial layout must not react to the page geometry at the table's stale pre-move
+     * position, or the first body row gets the phantom straddle gap as extra height.
+     * https://github.com/danfickle/openhtmltopdf/issues/202
+     */
+    @Test
+    public void testPaginatedTableEscalatedHeadGap() throws IOException {
+        assertTrue(vt.runTest("paginated-table-escalated-head-gap", TestSupport.WITH_FONT));
     }
 
     /**
@@ -1819,6 +1829,19 @@ public class VisualRegressionTest {
     @Test
     public void testIssue115CurrentColor() throws IOException {
         assertTrue(vt.runTest("current-color", TestSupport.WITH_FONT));
+    }
+
+    /**
+     * Tests that :nth-child(an+b) selectors with a non-zero, non-unary step
+     * (such as :nth-child(n+3), :nth-child(-n+3) and :nth-child(2n+3)) only
+     * select the elements reachable via a non-negative repeat count, rather
+     * than selecting every child.
+     * <p>
+     * See https://github.com/openhtmltopdf/openhtmltopdf/issues/113
+     */
+    @Test
+    public void testIssue113NthChildWithOffset() throws IOException {
+        assertTrue(vt.runTest("nth-child-n-plus-i"));
     }
 
     @Test
