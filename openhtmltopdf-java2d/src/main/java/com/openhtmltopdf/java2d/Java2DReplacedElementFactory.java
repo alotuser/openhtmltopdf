@@ -17,9 +17,7 @@ import com.openhtmltopdf.render.BlockBox;
 import com.openhtmltopdf.render.FSSVGImage;
 import com.openhtmltopdf.resource.ImageResource;
 import com.openhtmltopdf.resource.XMLResource;
-import com.openhtmltopdf.util.ColorDitherUtil;
-import com.openhtmltopdf.util.ColorDitherUtil.DitherKernel;
-import com.openhtmltopdf.util.ColorDitherUtil.PaletteMode;
+import com.openhtmltopdf.swing.dither.DitherFactory;
 import com.openhtmltopdf.util.LogMessageId;
 import com.openhtmltopdf.util.SVGUriDetector;
 import com.openhtmltopdf.util.XRLog;
@@ -137,18 +135,8 @@ public class Java2DReplacedElementFactory implements ReplacedElementFactory {
         }
 
         //7G add  dither 
-        String paletteAttr = elem.getAttribute(ColorDitherUtil.PALETTE_MODE_ATTR);
-        String kernelAttr = elem.getAttribute(ColorDitherUtil.DITHER_KERNEL_ATTR);
-        if (paletteAttr != null && !paletteAttr.trim().isEmpty()&&kernelAttr != null && !kernelAttr.trim().isEmpty()) {
-            try {
-            	PaletteMode paletteMode = ColorDitherUtil.PaletteMode.valueOf(paletteAttr.trim().toUpperCase());
-            	DitherKernel ditherKernel = ColorDitherUtil.DitherKernel.valueOf(kernelAttr.trim().toUpperCase());
-                newImg= ColorDitherUtil.dither(newImg, width, height, paletteMode, ditherKernel);
-            } catch (Exception e) {
-            	XRLog.log(Level.WARNING,LogMessageId.LogMessageId0Param.EXCEPTION_INVALID_DESTS_ARRAY ,e);
-            }
-        } 
- 
+        newImg = DitherFactory.getDither().toImg(elem, width, height, newImg);
+        
         if (width > -1 || height > -1) {
             XRLog.log(Level.FINE, LogMessageId.LogMessageId4Param.LOAD_IMAGE_LOADER_SCALING_URI_TO,
                     this, uri, width, height);
