@@ -71,13 +71,33 @@ public class SimpleDitherStrategy implements BaseDither {
 	}
 
 	/**
-	 * Dither kernel enumeration for error-diffusion algorithms, reference dither-dream kgjenkins/dither-dream MIT
-	 * <p>
-	 * Categories:
+	 * Dither kernel enumeration for error-diffusion and ordered dither algorithms.
+	 * Reference algorithm kernel weights: kgjenkins/dither-dream(MIT License).
+	 * <p>Bibliography of original papers / references:</p>
 	 * <ul>
-	 * <li>Error-diffusion: FLOYD_STEINBERG / SIERRA_LITE / SIERRA_2_4A / ATKINSON / JARVIS_JUDICE_NINKE</li>
-	 * <li>Ordered dither: BAYER_8X8, offsets and divisor are unused, handled in separate branch</li>
+	 * <li>Floyd-Steinberg(1976): R.W.Floyd, L.Steinberg, <i>An Adaptive Algorithm for Spatial Gray Scale</i>, SIGGRAPH 1976</li>
+	 * <li>Jarvis-Judice-Ninke(1976): <i>A Survey of Techniques for the Image Display of Continuous Tone Pictures on Bilevel Displays</i></li>
+	 * <li>Stucki(1981): MECCA-A Multiple-Error Correcting Computation Algorithm for Bilevel Image Hardcopy Reproduction</li>
+	 * <li>Burkes(1988): simplified variant of Stucki algorithm</li>
+	 * <li>Atkinson(circa 1985): Bill Atkinson(Apple Macintosh firmware), no formal published paper; discards ~25% quantization error</li>
+	 * <li>Sierra family(1989): Frank Sierra, Usenet graphics community public-domain weights(Sierra-Lite, Sierra-2-4A, Sierra-3)</li>
+	 * <li>Knox: texture-optimized error-diffusion for printed halftone</li>
+	 * <li>Stevenson-Arce: blue-noise oriented error-diffusion halftone</li>
+	 * <li>Bayer ordered dither(1969): B.E.Bayer, US Patent US3531793, dispersed-dot ordered dither matrix</li>
+	 * <li>Book reference: Robert Ulichney, <i>Digital Halftoning</i>, 1987</li>
 	 * </ul>
+	 *
+	 * <p>Implementation note for error-diffusion kernels: maximum vertical offset dy = +2 for all entries in this enum.
+	 * The sliding-window ring-buffer implementation in {@code doDitherCore} requires at least 3 physical lines of buffer memory.
+	 * <br>CAUTION: Adding new error-diffusion kernel with vertical offset {@code dy > +2} requires increasing ring-buffer line count,
+	 * otherwise error propagation will be incomplete and produce corrupted output image.</p>
+	 *
+	 * <p>Algorithm categories:</p>
+	 * <ul>
+	 * <li>Error-diffusion: FLOYD_STEINBERG / SIERRA_LITE / SIERRA_2_4A / SIERRA_3 / STUCKI / BURKES / KNOX / STEVENSON_ARCE / ATKINSON / JARVIS_JUDICE_NINKE</li>
+	 * <li>Ordered dither: BAYER_8X8, offsets and divisor are unused, handled in separate code branch</li>
+	 * </ul>
+	 *
 	 * <p>E-ink device kernel selection reference:</p>
 	 * <table border="1" cellpadding="4" cellspacing="0">
 	 * <tr>
@@ -92,7 +112,7 @@ public class SimpleDitherStrategy implements BaseDither {
 	 * <td>{@code FLOYD_STEINBERG}</td>
 	 * <td>Error-diffusion</td>
 	 * <td>Classic balanced, natural gradation</td>
-	 * <td>Medium grain noise</td>
+	 * <td>Medium grain noise, potential serpentine artifacts</td>
 	 * <td>Legacy template compatibility, general product images</td>
 	 * <td>{@code dither-kernel="FLOYD_STEINBERG"}</td>
 	 * </tr>
@@ -100,17 +120,9 @@ public class SimpleDitherStrategy implements BaseDither {
 	 * <td>{@code SIERRA_LITE}</td>
 	 * <td>Error-diffusion</td>
 	 * <td>Clean and soft appearance, stable lines</td>
-	 * <td>Very low noise</td>
+	 * <td>Very low noise, moderate quality loss compared to full Sierra variants</td>
 	 * <td><b>Recommended default: mixed templates with product images and small logos</b></td>
 	 * <td>{@code dither-kernel="SIERRA_LITE"}</td>
-	 * </tr>
-	 * <tr>
-	 * <td>{@code ATKINSON}</td>
-	 * <td>Error-diffusion</td>
-	 * <td>Film-like appearance, high contrast</td>
-	 * <td>Dark-area clipping, small text tends to blur</td>
-	 * <td>Use with caution; for text-free landscape images</td>
-	 * <td>{@code dither-kernel="ATKINSON"}</td>
 	 * </tr>
 	 * <tr>
 	 * <td>{@code SIERRA_2_4A}</td>
@@ -121,50 +133,151 @@ public class SimpleDitherStrategy implements BaseDither {
 	 * <td>{@code dither-kernel="SIERRA_2_4A"}</td>
 	 * </tr>
 	 * <tr>
+	 * <td>{@code SIERRA_3}</td>
+	 * <td>Error-diffusion</td>
+	 * <td>Full-version Sierra, extremely smooth gradation</td>
+	 * <td>Highest CPU overhead among Sierra family</td>
+	 * <td>Static high-quality product still-life photos, performance-unconstrained scenario</td>
+	 * <td>{@code dither-kernel="SIERRA_3"}</td>
+	 * </tr>
+	 * <tr>
+	 * <td>{@code STUCKI}</td>
+	 * <td>Error-diffusion</td>
+	 * <td>Smooth gradients, good detail preservation</td>
+	 * <td>Moderately high CPU overhead</td>
+	 * <td>High-quality product and landscape photographs</td>
+	 * <td>{@code dither-kernel="STUCKI"}</td>
+	 * </tr>
+	 * <tr>
+	 * <td>{@code BURKES}</td>
+	 * <td>Error-diffusion</td>
+	 * <td>Balanced smoothness and computation speed</td>
+	 * <td>Slightly reduced quality compared to Stucki</td>
+	 * <td>Photo scenarios where performance matters</td>
+	 * <td>{@code dither-kernel="BURKES"}</td>
+	 * </tr>
+	 * <tr>
+	 * <td>{@code KNOX}</td>
+	 * <td>Error-diffusion</td>
+	 * <td>Texture-optimized halftone pattern</td>
+	 * <td>Moderate compute overhead</td>
+	 * <td>Print-oriented texture images, not recommended for mixed text-graphic price-tag</td>
+	 * <td>{@code dither-kernel="KNOX"}</td>
+	 * </tr>
+	 * <tr>
+	 * <td>{@code STEVENSON_ARCE}</td>
+	 * <td>Error-diffusion</td>
+	 * <td>Blue-noise characteristic, uniform grain distribution</td>
+	 * <td>High computation cost</td>
+	 * <td>High-quality continuous-tone photos, text-free image only</td>
+	 * <td>{@code dither-kernel="STEVENSON_ARCE"}</td>
+	 * </tr>
+	 * <tr>
+	 * <td>{@code ATKINSON}</td>
+	 * <td>Error-diffusion</td>
+	 * <td>Film-like appearance, high contrast</td>
+	 * <td>Dark-area clipping, small text tends to blur; discards ~25% quantization error</td>
+	 * <td>Use with caution; for text-free landscape images</td>
+	 * <td>{@code dither-kernel="ATKINSON"}</td>
+	 * </tr>
+	 * <tr>
 	 * <td>{@code JARVIS_JUDICE_NINKE}</td>
 	 * <td>Error-diffusion</td>
 	 * <td>Wide diffusion range, extremely soft transitions</td>
-	 * <td>Loss of fine details, small text blurring</td>
+	 * <td>Loss of fine details, small text blurring; highest computational cost among built-in kernels</td>
 	 * <td>Use with caution; large-size images without small text or logos</td>
 	 * <td>{@code dither-kernel="JARVIS_JUDICE_NINKE"}</td>
 	 * </tr>
 	 * <tr>
 	 * <td>{@code BAYER_8X8}</td>
 	 * <td>Ordered dither</td>
-	 * <td>Fastest execution speed</td>
-	 * <td>Grid-like artifacts on color gradients</td>
+	 * <td>Fastest execution speed, deterministic output</td>
+	 * <td>Grid-like artifacts appear on smooth color gradients</td>
 	 * <td>Icons and simple graphics, performance-prioritized scenarios</td>
 	 * <td>{@code dither-kernel="BAYER_8X8"}</td>
 	 * </tr>
 	 * </table>
-	 * <p>Note: HTML attribute value must exactly match uppercase enum name. BAYER_8X8 uses separate logic branch instead of error-diffusion loop.</p>
+	 *
+	 * <p>Note: HTML attribute value must exactly match uppercase enum name.
+	 * BAYER_8X8 uses separate logic branch instead of error-diffusion processing loop.</p>
 	 */
 	public enum DitherKernel {
-		/** Floyd-Steinberg classic error-diffusion, balanced output, legacy compatibility */
+		/**
+		 * Floyd-Steinberg classic error-diffusion, balanced output, legacy compatibility.
+		 * Reference: SIGGRAPH 1976 paper.
+		 */
 		FLOYD_STEINBERG(new int[][]{{1, 0, 7}, {-1, 1, 3}, {0, 1, 5}, {1, 1, 1}}, 16),
 
-		/** Sierra-2-4A high-quality smooth error-diffusion with fine gradation; for real-world product photos, higher CPU overhead */
-		SIERRA_2_4A(new int[][]{{1, 0, 4}, {2, 0, 3}, {-2, 1, 1}, {-1, 1, 2}, {0, 1, 3}, {1, 1, 2}, {2, 1, 1}}, 16),
-
-		/** Sierra-Lite [Recommended Default] low noise, clean lines, good performance for product + small-logo content */
+		/**
+		 * Sierra-Lite [Recommended Default] low noise, clean lines, good performance for product + small-logo content.
+		 * Light-weight simplified Sierra variant from Usenet graphics community.
+		 */
 		SIERRA_LITE(new int[][]{{1, 0, 2}, {-1, 1, 1}, {0, 1, 1}, {1, 1, 1}}, 5),
 
-		/** Stucki error‑diffusion, smooth gradient, better than Floyd‑Steinberg, higher CPU cost */
+		/**
+		 * Sierra-2-4A high-quality smooth error-diffusion with fine gradation; for real-world product photos, higher CPU overhead.
+		 * Two-row Sierra variant from Usenet graphics community.
+		 */
+		SIERRA_2_4A(new int[][]{{1, 0, 4}, {2, 0, 3}, {-2, 1, 1}, {-1, 1, 2}, {0, 1, 3}, {1, 1, 2}, {2, 1, 1}}, 16),
+
+		/**
+		 * Sierra-3 full 3-row error-diffusion algorithm; higher computational cost, very smooth gradient output.
+		 * Full weight set of Sierra family, best gradation quality but expensive to compute.
+		 */
+		SIERRA_3(new int[][] { { 1, 0, 5 }, { 2, 0, 3 }, { -2, 1, 2 }, { -1, 1, 4 }, { 0, 1, 5 }, { 1, 1, 4 }, { 2, 1, 2 }, { -2, 2, 1 }, { -1, 2, 2 }, { 0, 2, 3 }, { 1, 2, 2 }, { 2, 2, 1 } }, 32),
+
+		/**
+		 * Knox error-diffusion, texture-oriented halftone, optimized for printed textures; rarely used for e-ink price-tag templates.
+		 * Tuned for texture reproduction, not friendly to small text or thin lines.
+		 */
+		KNOX(new int[][] { { 1, 0, 4 }, { 2, 0, 3 }, { -2, 1, 1 }, { -1, 1, 2 }, { 0, 1, 3 }, { 1, 1, 2 }, { 2, 1, 1 }, { -1, 2, 1 }, { 0, 2, 2 }, { 1, 2, 1 } }, 20),
+
+		/**
+		 * Stevenson-Arce error-diffusion, blue-noise property, more uniform noise distribution; good for continuous-tone images.
+		 * Produces visually pleasant grain pattern, high CPU consumption.
+		 */
+		STEVENSON_ARCE(new int[][] { { 1, 0, 8 }, { 2, 0, 4 }, { -2, 1, 2 }, { -1, 1, 4 }, { 0, 1, 8 }, { 1, 1, 4 }, { 2, 1, 2 }, { -2, 2, 1 }, { -1, 2, 2 }, { 0, 2, 4 }, { 1, 2, 2 }, { 2, 2, 1 } }, 48),
+
+		/**
+		 * Stucki error-diffusion, smooth gradient, better detail preservation than Floyd-Steinberg, higher CPU cost.
+		 * Reference: MECCA algorithm paper 1981.
+		 */
 		STUCKI(new int[][] { { 1, 0, 8 }, { 2, 0, 4 }, { -2, 1, 2 }, { -1, 1, 4 }, { 0, 1, 8 }, { 1, 1, 4 }, { 2, 1, 2 }, { -2, 2, 1 }, { -1, 2, 2 }, { 0, 2, 4 }, { 1, 2, 2 }, { 2, 2, 1 } }, 42),
 
-		/** Burkes error‑diffusion, balance of speed and image smoothness */
-		BURKES(new int[][]{{1,0,8},{2,0,4},{-2,1,2},{-1,1,4},{0,1,8},{1,1,4},{2,1,2}}, 32),
+		/**
+		 * Burkes error-diffusion, balance of speed and image smoothness.
+		 * Simplified performance-optimized variant derived from Stucki.
+		 */
+		BURKES(new int[][] { { 1, 0, 8 }, { 2, 0, 4 }, { -2, 1, 2 }, { -1, 1, 4 }, { 0, 1, 8 }, { 1, 1, 4 }, { 2, 1, 2 } }, 32),
 
-		/** Atkinson high-contrast film-style; ⚠️ dark clipping risk, small text may blur, avoid heavy text templates */
-		ATKINSON(new int[][]{{1, 0, 1}, {2, 0, 1}, {-1, 1, 1}, {0, 1, 1}, {1, 1, 1}, {0, 2, 1}}, 8),
+		/**
+		 * Atkinson high-contrast film-style; ⚠️ dark clipping risk, small text may blur, avoid heavy text templates.
+		 * Origin: Apple Macintosh firmware, discards approximately 25% quantization error.
+		 */
+		ATKINSON(new int[][] { { 1, 0, 1 }, { 2, 0, 1 }, { -1, 1, 1 }, { 0, 1, 1 }, { 1, 1, 1 }, { 0, 2, 1 } }, 8),
 
-		/** Jarvis-Judice-Ninke wide-range diffusion for very soft gradients; ⚠️ fine-detail loss risk, not suitable for small text or logos */
-		JARVIS_JUDICE_NINKE(new int[][]{{1, 0, 7}, {2, 0, 5}, {-2, 1, 3}, {-1, 1, 5}, {0, 1, 7}, {1, 1, 5}, {2, 1, 3}, {-2, 2, 1}, {-1, 2, 3}, {0, 2, 5}, {1, 2, 3}, {2, 2, 1}}, 48),
+		/**
+		 * Jarvis-Judice-Ninke wide-range diffusion for very soft gradients; ⚠️ fine-detail loss risk, not suitable for small text or logos.
+		 * Reference: 1976 bilevel display survey paper; highest computation cost among built-in kernels.
+		 */
+		JARVIS_JUDICE_NINKE(new int[][] { { 1, 0, 7 }, { 2, 0, 5 }, { -2, 1, 3 }, { -1, 1, 5 }, { 0, 1, 7 }, { 1, 1, 5 }, { 2, 1, 3 }, { -2, 2, 1 }, { -1, 2, 3 }, { 0, 2, 5 }, { 1, 2, 3 }, { 2, 2, 1 } }, 48),
 
-		/** Bayer 8×8 ordered dither, no error diffusion; fastest speed for icons/simple graphics; gradients produce visible grid patterns */
+		/**
+		 * Bayer 8×8 ordered dither, no error diffusion; fastest speed for icons/simple graphics; gradients produce visible grid patterns.
+		 * Reference: US Patent US3531793 (1969).
+		 */
 		BAYER_8X8(null, 0);
 
+		/**
+		 * Error-diffusion offset table: each entry format {dx, dy, weight}.
+		 * Unused for ordered-dither ({@code BAYER_8X8}).
+		 */
 		private final int[][] offsets;
+
+		/**
+		 * Sum of diffusion weights, divisor for error distribution calculation.
+		 * Unused for ordered-dither ({@code BAYER_8X8}).
+		 */
 		private final int divisor;
 
 		DitherKernel(int[][] offsets, int divisor) {
@@ -172,18 +285,31 @@ public class SimpleDitherStrategy implements BaseDither {
 			this.divisor = divisor;
 		}
 
+		/**
+		 * Get error-diffusion offset weight table.
+		 * @return offset table, null for ordered-dither kernel.
+		 */
 		public int[][] getOffsets() {
 			return offsets;
 		}
 
+		/**
+		 * Get divisor for error weight normalization.
+		 * @return divisor value, undefined for ordered-dither kernel.
+		 */
 		public int getDivisor() {
 			return divisor;
 		}
 
+		/**
+		 * Judge whether this kernel belongs to ordered-dither (non-error-diffusion).
+		 * @return true if ordered dither, false for error-diffusion kernel.
+		 */
 		public boolean isOrderedDither() {
 			return this == BAYER_8X8;
 		}
-	}
+    }
+
 
 	private static final int[][] BAYER_8X8_MATRIX = {
 			{0, 32, 8, 40, 2, 34, 10, 42},
