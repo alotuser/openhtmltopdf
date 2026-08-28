@@ -5,7 +5,7 @@ import java.net.URL;
 
 import cn.alotus.core.io.resource.ResourceUtil;
 
-public class JPdfTest {
+public class JpdfTest {
 
 	public static void main(String[] args) throws IOException {
 		String resHtml="7.html";

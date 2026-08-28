@@ -14,7 +14,7 @@ public interface BaseDither {
     String DITHER_KERNEL_ATTR = "dither-kernel";
 
     /** Default gamma correction factor; 0.7-0.9 recommended for e‑ink displays; use 1.0f to disable gamma correction */
-    float DEFAULT_GAMMA = 0.85f;
+    final float DEFAULT_GAMMA = 0.85f;
 
     /**
      * Perform image dither according to attributes on Element tag.

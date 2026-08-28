@@ -55,13 +55,44 @@ public final class DitherFactory {
             return (e, w, h, img) -> img;
         }
         String kernelAttr = elem.getAttribute(BaseDither.DITHER_KERNEL_ATTR);
-        if (kernelAttr != null && !kernelAttr.trim().isEmpty()) {
+        return selectStrategy(kernelAttr);
+    }
+
+	/**
+	 * Select concrete strategy by kernel string.
+	 * <ul>
+	 * <li>if kernel string exists: use SimpleDitherStrategy(new full-feature dither)</li>
+	 * <li>no kernel string: use LegacyDitherStrategy(for old template compatibility)</li>
+	 * </ul>
+	 * 
+	 * @param kernel dither-kernel attribute value
+	 * @return selected concrete BaseDither strategy
+	 */
+    public static BaseDither selectStrategy(String kernel) {
+    	
+        if (kernel != null && !kernel.trim().isEmpty()) {
             return new SimpleDitherStrategy();
         } else {
             return new LegacyDitherStrategy();
         }
+        
     }
 
+	/**
+	 * Select concrete strategy by kernel string.
+	 * <ul>
+	 * <li>if kernel string exists: use SimpleDitherStrategy(new full-feature dither)</li>
+	 * <li>no kernel string: use LegacyDitherStrategy(for old template compatibility)</li>
+	 * </ul>
+	 * 
+	 * @return selected concrete BaseDither strategy
+	 */
+    public static BaseDither selectStrategy() {
+    	
+        return selectStrategy((String)null);
+        
+    }
+    
     /**
      * Internal facade implementation, delegate to selectStrategy.
      * Upper layer only calls facade.toImg(), no need to care about strategy switching.
