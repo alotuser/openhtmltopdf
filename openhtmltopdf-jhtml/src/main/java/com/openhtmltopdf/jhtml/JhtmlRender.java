@@ -3,6 +3,7 @@ package com.openhtmltopdf.jhtml;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -203,7 +204,7 @@ public class JhtmlRender {
 		}
 		builder.useEnvironmentFonts(true);
 		builder.usePixelDimensions(usePx);
-		builder.useFastMode();
+		//builder.useFastMode();
 		// register fonts if provided
 		WITH_FOOTS.configure(builder);
 		// apply external configurations
@@ -246,7 +247,7 @@ public class JhtmlRender {
 		BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(imageType, scale);
 
 		builder.useDefaultPageSize(getPageWidth(), getPageHeight(), units);
-		builder.useFastMode();
+		//builder.useFastMode();
 		// register fonts if provided
 		WITH_FOOTS.configure(builder);
 		// apply external configurations
@@ -314,7 +315,38 @@ public class JhtmlRender {
 		builder.run();
 
 	}
+	
+	/**
+	 * Render HTML to PDF and write to disk at specified path.
+	 *
+	 * @param html    html content
+	 * @param outPath destination file path for PDF
+	 * @throws IOException on IO errors
+	 */
+	public void toPdf(String html, String outPath,PdfBuilderConfig... config) throws IOException {
 
+		try (OutputStream os = new FileOutputStream(outPath)) {
+			toPdf(html, os, config);
+		}
+		
+	}
+
+	/**
+	 * Render HTML to PDF and return as byte array.
+	 *
+	 * @param html html content
+	 * @return byte[] containing PDF data
+	 * @throws IOException on IO errors
+	 */
+	public byte[] toPdf(String html,PdfBuilderConfig... config) throws IOException {
+
+		try (ByteArrayOutputStream actual = new ByteArrayOutputStream()){
+			toPdf(html, actual, config);
+			return actual.toByteArray();
+		}
+		
+	}
+	
 	/**
 	 * Write rendered HTML as PNG file to disk (single page).
 	 *
