@@ -143,14 +143,20 @@ public class SimpleDitherStrategy implements BaseDither {
 		/** Floyd-Steinberg classic error-diffusion, balanced output, legacy compatibility */
 		FLOYD_STEINBERG(new int[][]{{1, 0, 7}, {-1, 1, 3}, {0, 1, 5}, {1, 1, 1}}, 16),
 
+		/** Sierra-2-4A high-quality smooth error-diffusion with fine gradation; for real-world product photos, higher CPU overhead */
+		SIERRA_2_4A(new int[][]{{1, 0, 4}, {2, 0, 3}, {-2, 1, 1}, {-1, 1, 2}, {0, 1, 3}, {1, 1, 2}, {2, 1, 1}}, 16),
+
 		/** Sierra-Lite [Recommended Default] low noise, clean lines, good performance for product + small-logo content */
 		SIERRA_LITE(new int[][]{{1, 0, 2}, {-1, 1, 1}, {0, 1, 1}, {1, 1, 1}}, 5),
 
+		/** Stucki error‑diffusion, smooth gradient, better than Floyd‑Steinberg, higher CPU cost */
+		STUCKI(new int[][] { { 1, 0, 8 }, { 2, 0, 4 }, { -2, 1, 2 }, { -1, 1, 4 }, { 0, 1, 8 }, { 1, 1, 4 }, { 2, 1, 2 }, { -2, 2, 1 }, { -1, 2, 2 }, { 0, 2, 4 }, { 1, 2, 2 }, { 2, 2, 1 } }, 42),
+
+		/** Burkes error‑diffusion, balance of speed and image smoothness */
+		BURKES(new int[][]{{1,0,8},{2,0,4},{-2,1,2},{-1,1,4},{0,1,8},{1,1,4},{2,1,2}}, 32),
+
 		/** Atkinson high-contrast film-style; ⚠️ dark clipping risk, small text may blur, avoid heavy text templates */
 		ATKINSON(new int[][]{{1, 0, 1}, {2, 0, 1}, {-1, 1, 1}, {0, 1, 1}, {1, 1, 1}, {0, 2, 1}}, 8),
-
-		/** Sierra-2-4A high-quality smooth error-diffusion with fine gradation; for real-world product photos, higher CPU overhead */
-		SIERRA_2_4A(new int[][]{{1, 0, 4}, {2, 0, 3}, {-2, 1, 1}, {-1, 1, 2}, {0, 1, 3}, {1, 1, 2}, {2, 1, 1}}, 16),
 
 		/** Jarvis-Judice-Ninke wide-range diffusion for very soft gradients; ⚠️ fine-detail loss risk, not suitable for small text or logos */
 		JARVIS_JUDICE_NINKE(new int[][]{{1, 0, 7}, {2, 0, 5}, {-2, 1, 3}, {-1, 1, 5}, {0, 1, 7}, {1, 1, 5}, {2, 1, 3}, {-2, 2, 1}, {-1, 2, 3}, {0, 2, 5}, {1, 2, 3}, {2, 2, 1}}, 48),
