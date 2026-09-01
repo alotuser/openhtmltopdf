@@ -1,4 +1,4 @@
-package com.openhtmltopdf.jhtml.processor;
+package com.openhtmltopdf.jhtml.api;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -15,10 +15,11 @@ public class BufferedImagePageProcessor implements FSPageProcessor {
 	private final double _scale;
 	private final int _imageType;
 
-	private List<BufferedImagePage> _pages = new ArrayList<>();
+	private final List<BufferedImagePage> _pages = new ArrayList<>();
 
 	private class BufferedImagePage implements FSPage {
-		BufferedImage _image;
+        final BufferedImage _image;
+        Graphics2D graphics;
 
 		BufferedImagePage(BufferedImage image) {
 			this._image = image;
@@ -26,7 +27,11 @@ public class BufferedImagePageProcessor implements FSPageProcessor {
 
 		@Override
 		public Graphics2D getGraphics() {
-			Graphics2D graphics = _image.createGraphics();
+            if (graphics != null) {
+                return graphics;
+            }
+
+            graphics = _image.createGraphics();
 
 			if (_image.getColorModel().hasAlpha()) {
 				if(BufferedImage.TYPE_INT_ARGB==_imageType||_imageType==BufferedImage.TYPE_INT_ARGB_PRE) {
@@ -50,10 +55,10 @@ public class BufferedImagePageProcessor implements FSPageProcessor {
 	/**
 	 *
 	 * @param imageType
-	 *                  Type of the BufferedImage, e.g. BufferedImage#TYPE_INT_ARGB
+	 *            Type of the BufferedImage, e.g. BufferedImage#TYPE_INT_ARGB
 	 * @param scale
-	 *                  scale factor. You can control what resolution of the images
-	 *                  you want
+	 *            scale factor. You can control what resolution of the images
+	 *            you want
 	 */
 	public BufferedImagePageProcessor(int imageType, double scale) {
 		_imageType = imageType;
@@ -68,12 +73,12 @@ public class BufferedImagePageProcessor implements FSPageProcessor {
 		return bufferedImagePage;
 	}
 
-	@Override
-	public void finishPage(FSPage pg) {
-		/*
-		 * We don't need to do anything here.
-		 */
-	}
+    @Override
+    public void finishPage(FSPage pg) {
+        BufferedImagePage page = (BufferedImagePage) pg;
+        page.graphics.dispose();
+        page.graphics = null;
+    }
 
 	public List<BufferedImage> getPageImages() {
 		List<BufferedImage> images = new ArrayList<>();

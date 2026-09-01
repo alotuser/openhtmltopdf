@@ -10,7 +10,7 @@ import com.openhtmltopdf.bidi.support.ICUBidiSplitter;
 import com.openhtmltopdf.bidi.support.ICUBreakers;
 import com.openhtmltopdf.extend.FSTextBreaker;
 import com.openhtmltopdf.java2d.api.Java2DRendererBuilder;
-import com.openhtmltopdf.jhtml.builder.AsRendererBuilder;
+import com.openhtmltopdf.jhtml.api.JhtmlRendererBuilder;
 import com.openhtmltopdf.jhtml.drawer.CustomObjectDrawerBinaryTree;
 import com.openhtmltopdf.latexsupport.LaTeXDOMMutator;
 import com.openhtmltopdf.mathmlsupport.MathMLDrawer;
@@ -33,7 +33,7 @@ public class BuilderConfig {
 	
 	@FunctionalInterface
 	public interface AsBuilderConfig {
-		public void configure(AsRendererBuilder builder);
+		public void configure(JhtmlRendererBuilder builder);
 	}
 
 	@FunctionalInterface

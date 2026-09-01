@@ -1,7 +1,5 @@
-
 package com.openhtmltopdf.jhtml;
 
-import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -13,25 +11,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 import javax.imageio.ImageIO;
-import javax.swing.text.html.HTML;
 
 import org.apache.commons.io.IOUtils;
-import org.w3c.dom.Element;
 
 import com.openhtmltopdf.extend.SVGDrawer;
 import com.openhtmltopdf.java2d.api.DefaultPageProcessor;
+import com.openhtmltopdf.jhtml.api.BufferedImagePageProcessor;
+import com.openhtmltopdf.jhtml.api.JhtmlRendererBuilder;
 import com.openhtmltopdf.jhtml.builder.AsLogBuilder;
-import com.openhtmltopdf.jhtml.builder.AsRendererBuilder;
 import com.openhtmltopdf.jhtml.config.BuilderConfig;
 import com.openhtmltopdf.jhtml.config.BuilderConfig.BaseBuilderConfig;
 import com.openhtmltopdf.jhtml.config.BuilderConfig.PdfBuilderConfig;
-import com.openhtmltopdf.jhtml.processor.AsJsoupProcessor;
-import com.openhtmltopdf.jhtml.processor.AsProcessor;
-import com.openhtmltopdf.jhtml.processor.BufferedImagePageProcessor;
-import com.openhtmltopdf.jhtml.renderer.AsRenderer;
+import com.openhtmltopdf.jhtml.processor.JhtmlJsoupProcessor;
+import com.openhtmltopdf.jhtml.processor.JhtmlProcessor;
 import com.openhtmltopdf.latexsupport.LaTeXDOMMutator;
 import com.openhtmltopdf.mathmlsupport.MathMLDrawer;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.PageSizeUnits;
@@ -41,12 +35,11 @@ import com.openhtmltopdf.svgsupport.BatikSVGDrawer;
 import com.openhtmltopdf.util.XRLog;
 
 import cn.alotus.core.io.file.FileNameUtil;
-import cn.alotus.core.util.StrUtil;
 
 /**
- * JhtmlRender
+ * JhtmlKit
  * <pre>
- * HtmlRender is a convenience facade around OpenHTMLToPDF's building and rendering facilities. 
+ * JhtmlKit is a convenience facade around OpenHTMLToPDF's building and rendering facilities. 
  * It provides simple APIs to convert HTML content into images (single or multi-page), PDF streams, and PNG files. 
  * The class exposes configuration points for page size, units, image type, scaling, font directories and base document URI.
  *
@@ -56,7 +49,7 @@ import cn.alotus.core.util.StrUtil;
  * - after rendering, use getAsRenderer() and findBy* methods to locate element rectangles
  *
  * Threading and lifecycle: 
- *- HtmlRender holds an internal AsRenderer instance after rendering; findBy* methods require that rendering has been executed first (toImage or toImages).
+ *- JhtmlKit holds an internal AsRenderer instance after rendering; findBy* methods require that rendering has been executed first (toImage or toImages).
  *
  * Note: 
  * - This class aims to keep rendering details encapsulated and expose common flows used in the project.
@@ -65,7 +58,7 @@ import cn.alotus.core.util.StrUtil;
  * @version 1.0
  * @date 2024-05-15
  */
-public class JhtmlRender {
+public class JhtmlKit {
 
 	// Page width in the configured units (default value provided).
 	private Float pageWidth = null;
@@ -74,7 +67,7 @@ public class JhtmlRender {
 	private Float pageHeight = null;
 
 	// Units for page size measurements (MM, PT, IN, etc.).
-	private PageSizeUnits units = AsRendererBuilder.PageSizeUnits.MM;
+	private PageSizeUnits units = JhtmlRendererBuilder.PageSizeUnits.MM;
 
 	// BufferedImage type used for produced images (e.g. BufferedImage.TYPE_INT_RGB).
 	private int imageType = BufferedImage.TYPE_INT_RGB;
@@ -96,13 +89,13 @@ public class JhtmlRender {
 	private volatile Boolean loggingEnabled = false;
 
 	// Internal renderer instance produced by builder after a render call.
-	private AsRenderer asRenderer;
+	private JhtmlRenderer jhtmlRenderer;
 
-	private AsProcessor asProcessor;
+	private JhtmlProcessor jhtmlProcessor;
 	
 	private StringBuilder logStringBuilder;
 	
-	public JhtmlRender() {
+	public JhtmlKit() {
 		super();
 	}
 
@@ -112,7 +105,7 @@ public class JhtmlRender {
 	 * @param pageWidth  page width in configured units
 	 * @param pageHeight page height in configured units
 	 */
-	public JhtmlRender(Float pageWidth, Float pageHeight) {
+	public JhtmlKit(Float pageWidth, Float pageHeight) {
 		super();
 		setPageHeight(pageHeight);
 		setPageWidth(pageWidth);
@@ -125,7 +118,7 @@ public class JhtmlRender {
 	 * @param pageHeight page height
 	 * @param units      units for page size
 	 */
-	public JhtmlRender(Float pageWidth, Float pageHeight, PageSizeUnits units) {
+	public JhtmlKit(Float pageWidth, Float pageHeight, PageSizeUnits units) {
 		super();
 		setPageHeight(pageHeight);
 		setPageWidth(pageWidth);
@@ -138,7 +131,7 @@ public class JhtmlRender {
 	 *
 	 * @param imageType {@link BufferedImage imageType}
 	 */
-	public JhtmlRender(int imageType) {
+	public JhtmlKit(int imageType) {
 		super();
 		this.imageType = imageType;
 	}
@@ -149,7 +142,7 @@ public class JhtmlRender {
 	 * @param imageType {@link BufferedImage imageType}
 	 * @param scale     rendering scale multiplier
 	 */
-	public JhtmlRender(int imageType, double scale) {
+	public JhtmlKit(int imageType, double scale) {
 		super();
 		this.imageType = imageType;
 		this.scale = scale;
@@ -164,7 +157,7 @@ public class JhtmlRender {
 	 * @param imageType  {@link BufferedImage imageType}
 	 * @param scale      rendering scale multiplier
 	 */
-	public JhtmlRender(Float pageWidth, Float pageHeight, PageSizeUnits units, int imageType, double scale) {
+	public JhtmlKit(Float pageWidth, Float pageHeight, PageSizeUnits units, int imageType, double scale) {
 		super();
 		setPageHeight(pageHeight);
 		setPageWidth(pageWidth);
@@ -190,11 +183,11 @@ public class JhtmlRender {
 			logStringBuilder = AsLogBuilder.newStringBuilder();
 		}
 		
-		if(null!=asProcessor) {
-			html= asProcessor.asHtml(html);
+		if(null!=jhtmlProcessor) {
+			html= jhtmlProcessor.asHtml(html);
 		}
 		
-		AsRendererBuilder builder = new AsRendererBuilder();
+		JhtmlRendererBuilder builder = new JhtmlRendererBuilder();
 
 		builder.withHtmlContent(html, baseDocumentUri);
 
@@ -214,10 +207,10 @@ public class JhtmlRender {
 
 		builder.toSinglePage(bufferedImagePageProcessor);
 
-		asRenderer = builder.runFirstPage();
+		jhtmlRenderer = builder.runFirstPage();
 		
-		if(null!=asProcessor) {
-			asProcessor.asRenderer(asRenderer);
+		if(null!=jhtmlProcessor) {
+			jhtmlProcessor.jhtmlRenderer(jhtmlRenderer);
 		}
 		/*
 		 * Render Single Page Image
@@ -240,7 +233,7 @@ public class JhtmlRender {
 		if(loggingEnabled) {
 			logStringBuilder = AsLogBuilder.newStringBuilder();
 		}
-		AsRendererBuilder builder = new AsRendererBuilder();
+		JhtmlRendererBuilder builder = new JhtmlRendererBuilder();
 
 		builder.withHtmlContent(html, baseDocumentUri);
 
@@ -255,7 +248,7 @@ public class JhtmlRender {
 			baseBuilderConfig.configure(builder);
 		}
 		builder.toPageProcessor(bufferedImagePageProcessor);
-		asRenderer = builder.runPaged();
+		jhtmlRenderer = builder.runPaged();
 
 		/*
 		 * Render Paged Image(s)
@@ -396,92 +389,6 @@ public class JhtmlRender {
 		}
 
 	};
-
-	/**
-	 * Find elements by ID and return their content area rectangles.
-	 *
-	 * Requires that a previous render has initialized the internal AsRenderer.
-	 *
-	 * @param id The ID of the element to find.
-	 * @return A map of DOM Element to its content Rectangle
-	 */
-	@Deprecated
-	public Map<Element, Rectangle> findById(String id) {
-		if (asRenderer == null) {
-			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
-		}
-
-		return asRenderer.findElementRectangle(e -> {
-			return StrUtil.equals(id, e.getAttribute(HTML.Attribute.ID.toString()));
-		});
-	}
-
-	/**
-	 * Find elements by name attribute and return their content area rectangles.
-	 *
-	 * @param name The value of the name attribute to match.
-	 * @return Map of Element to Rectangle for matched elements
-	 */
-	@Deprecated
-	public Map<Element, Rectangle> findByName(String name) {
-		if (asRenderer == null) {
-			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
-		}
-		return asRenderer.findElementRectangle(e -> {
-			return StrUtil.equals(name, e.getAttribute(HTML.Attribute.NAME.toString()));
-		});
-	}
-
-	/**
-	 * Find elements by CSS class (class attribute) and return their rectangles.
-	 *
-	 * @param cssClass CSS class string to match
-	 * @return Map of Element to Rectangle for matched elements
-	 */
-	@Deprecated
-	public Map<Element, Rectangle> findByClass(String cssClass) {
-		if (asRenderer == null) {
-			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
-		}
-		return asRenderer.findElementRectangle(e -> {
-			return StrUtil.equals(cssClass, e.getAttribute(HTML.Attribute.CLASS.toString()));
-		});
-	}
-
-	/**
-	 * Find elements by tag name and return their rectangles.
-	 *
-	 * Matches element tag names (case-sensitive as provided by DOM).
-	 *
-	 * @param tagName element tag name to match
-	 * @return Map of Element to Rectangle for matched elements
-	 */
-	@Deprecated
-	public Map<Element, Rectangle> findByTagName(String tagName) {
-		if (asRenderer == null) {
-			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
-		}
-		return asRenderer.findElementRectangle(e -> {
-			return StrUtil.equals(tagName, e.getTagName());
-		});
-	}
-
-	/**
-	 * Find elements by arbitrary attribute name/value pair and return their rectangles.
-	 *
-	 * @param name  attribute name
-	 * @param value attribute value to match
-	 * @return Map of Element to Rectangle for matched elements
-	 */
-	@Deprecated
-	public Map<Element, Rectangle> findBySelector(String name, String value) {
-		if (asRenderer == null) {
-			throw new IllegalStateException("Please call toImage or toImages method first to initialize the renderer.");
-		}
-		return asRenderer.findElementRectangle(e -> {
-			return StrUtil.equals(value, e.getAttribute(name));
-		});
-	}
 
 	/**
 	 * pageWidth getter
@@ -669,8 +576,8 @@ public class JhtmlRender {
 	 *
 	 * @return AsRenderer or null if no rendering has occurred yet
 	 */
-	public AsRenderer getAsRenderer() {
-		return asRenderer;
+	public JhtmlRenderer getAsRenderer() {
+		return jhtmlRenderer;
 	}
 
 	///-----------------------------------------///
@@ -682,8 +589,8 @@ public class JhtmlRender {
 	 *
 	 * @return new HtmlRender instance
 	 */
-	public static JhtmlRender create() {
-		return new JhtmlRender();
+	public static JhtmlKit create() {
+		return new JhtmlKit();
 	}
 
 	/**
@@ -693,8 +600,8 @@ public class JhtmlRender {
 	 * @param pageHeight page height
 	 * @return new HtmlRender instance
 	 */
-	public static JhtmlRender create(Float pageWidth, Float pageHeight) {
-		return new JhtmlRender(pageWidth, pageHeight);
+	public static JhtmlKit create(Float pageWidth, Float pageHeight) {
+		return new JhtmlKit(pageWidth, pageHeight);
 	}
 
 	/**
@@ -705,8 +612,8 @@ public class JhtmlRender {
 	 * @param units      units for page size
 	 * @return new HtmlRender instance
 	 */
-	public static JhtmlRender create(Float pageWidth, Float pageHeight, PageSizeUnits units) {
-		return new JhtmlRender(pageWidth, pageHeight, units);
+	public static JhtmlKit create(Float pageWidth, Float pageHeight, PageSizeUnits units) {
+		return new JhtmlKit(pageWidth, pageHeight, units);
 	}
 
 	/**
@@ -715,8 +622,8 @@ public class JhtmlRender {
 	 * @param imageType {@link BufferedImage imageType}
 	 * @return new HtmlRender instance
 	 */
-	public static JhtmlRender create(int imageType) {
-		return new JhtmlRender(imageType);
+	public static JhtmlKit create(int imageType) {
+		return new JhtmlKit(imageType);
 	}
 
 	/**
@@ -726,8 +633,8 @@ public class JhtmlRender {
 	 * @param scale     rendering scale multiplier
 	 * @return new HtmlRender instance
 	 */
-	public static JhtmlRender create(int imageType, double scale) {
-		return new JhtmlRender(imageType, scale);
+	public static JhtmlKit create(int imageType, double scale) {
+		return new JhtmlKit(imageType, scale);
 	}
 
 	/**
@@ -740,8 +647,8 @@ public class JhtmlRender {
 	 * @param scale      rendering scale multiplier
 	 * @return new HtmlRender instance
 	 */
-	public static JhtmlRender create(Float pageWidth, Float pageHeight, PageSizeUnits units, int imageType, double scale) {
-		return new JhtmlRender(pageWidth, pageHeight, units, imageType, scale);
+	public static JhtmlKit create(Float pageWidth, Float pageHeight, PageSizeUnits units, int imageType, double scale) {
+		return new JhtmlKit(pageWidth, pageHeight, units, imageType, scale);
 	}
 	/**
 	 * Read HTML content from an absolute file path.
@@ -767,13 +674,13 @@ public class JhtmlRender {
 	@Deprecated
 	private BufferedImage runRendererSingle(String html, final String filename) throws IOException {
 
-		AsRendererBuilder builder = new AsRendererBuilder();
+		JhtmlRendererBuilder builder = new JhtmlRendererBuilder();
 
 		builder.withHtmlContent(html, baseDocumentUri);
 
 		BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(BufferedImage.TYPE_INT_RGB, 2.0);
 
-		builder.useDefaultPageSize(650, 700, AsRendererBuilder.PageSizeUnits.MM);
+		builder.useDefaultPageSize(650, 700, JhtmlRendererBuilder.PageSizeUnits.MM);
 		builder.useEnvironmentFonts(true);
 		// 开发模式下开启可以打印信息
 		builder.useFastMode();
@@ -803,7 +710,7 @@ public class JhtmlRender {
 	@Deprecated
 	@SuppressWarnings("unused")
 	private List<BufferedImage> runRendererPaged(String resourcePath, String html) {
-		AsRendererBuilder builder = new AsRendererBuilder();
+		JhtmlRendererBuilder builder = new JhtmlRendererBuilder();
 		builder.withHtmlContent(html, baseDocumentUri);
 		builder.useFastMode();
 		builder.testMode(true);
@@ -830,7 +737,7 @@ public class JhtmlRender {
 	private void renderSamplePNG(String html, final String filename) throws IOException {
 		try (SVGDrawer svg = new BatikSVGDrawer(); SVGDrawer mathMl = new MathMLDrawer()) {
 
-			AsRendererBuilder builder = new AsRendererBuilder();
+			JhtmlRendererBuilder builder = new JhtmlRendererBuilder();
 			builder.useSVGDrawer(svg);
 			builder.useMathMLDrawer(mathMl);
 
@@ -838,7 +745,7 @@ public class JhtmlRender {
 
 			BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(BufferedImage.TYPE_INT_ARGB, 2.0);
 
-			builder.useDefaultPageSize(150, 130, AsRendererBuilder.PageSizeUnits.MM);
+			builder.useDefaultPageSize(150, 130, JhtmlRendererBuilder.PageSizeUnits.MM);
 
 			builder.useEnvironmentFonts(true);
 			// 开发模式下开启可以打印信息
@@ -879,10 +786,10 @@ public class JhtmlRender {
 		}
 	}
 
-	public AsJsoupProcessor useJsoup() {
+	public JhtmlJsoupProcessor useJsoup() {
 		 
-		this.asProcessor = new AsJsoupProcessor();
+		this.jhtmlProcessor = new JhtmlJsoupProcessor();
 		
-		return (AsJsoupProcessor) this.asProcessor;
+		return (JhtmlJsoupProcessor) this.jhtmlProcessor;
 	}
 }

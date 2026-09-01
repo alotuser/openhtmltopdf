@@ -1,4 +1,4 @@
-package com.openhtmltopdf.jhtml.processor;
+package com.openhtmltopdf.jhtml.api;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -13,54 +13,54 @@ import javax.imageio.ImageIO;
 import com.openhtmltopdf.java2d.api.FSPage;
 import com.openhtmltopdf.java2d.api.FSPageOutputStreamSupplier;
 import com.openhtmltopdf.java2d.api.FSPageProcessor;
+import com.openhtmltopdf.util.OpenUtil;
 /**
- * PageProcessor to render everything to buffered images
+ * DefaultPageProcessor to render everything to buffered images
  */
-public class QtPageProcessor implements FSPageProcessor {
+public class JhtmlPageProcessor implements FSPageProcessor {
 
-	private final FSPageOutputStreamSupplier _osFactory;
-
-	private final int _imageType;
-	private final double _scale;
-	private final String _imageFormat;
-
-	private List<QtPage> _pages = new ArrayList<>();
-	
-	
-	private class QtPage implements FSPage {
+	private class JhtmlPage implements FSPage {
 		private final BufferedImage _img;
 		private final Graphics2D _g2d;
 		private final int _pgNo;
 		private final FSPageOutputStreamSupplier _osf;
 		private final String _imgFrmt;
 
-		public QtPage(int pgNo, int w, int h, FSPageOutputStreamSupplier osFactory, int imageType, String imageFormat) {
+		public JhtmlPage(int pgNo, int w, int h, FSPageOutputStreamSupplier osFactory, int imageType, String imageFormat) {
 			_img = new BufferedImage(w, h, imageType);
 			_g2d = _img.createGraphics();
 
-			if (_img.getColorModel().hasAlpha()) {
-				/* We need to clear with white transparent */
-				_g2d.setBackground(new Color(255, 255, 255, 0));
-				_g2d.clearRect(0, 0, (int) _img.getWidth(), (int) _img.getHeight());
-			} else {
-				_g2d.setColor(Color.WHITE);
-				_g2d.fillRect(0, 0, (int) _img.getWidth(), (int) _img.getHeight());
-			}
+            try {
+                if (_img.getColorModel().hasAlpha()) {
+                    /* We need to clear with white transparent */
+                    _g2d.setBackground(new Color(255, 255, 255, 0));
+                    _g2d.clearRect(0, 0, _img.getWidth(), _img.getHeight());
+                } else {
+                    _g2d.setColor(Color.WHITE);
+                    _g2d.fillRect(0, 0, _img.getWidth(), _img.getHeight());
+                }
 
 			_pgNo = pgNo;
 			_osf = osFactory;
 			_imgFrmt = imageFormat;
 
-			/*
-			 * Apply the scale on the bitmap
-			 */
-			_g2d.scale(_scale, _scale);
-
-		}
+            } catch (Throwable e) {
+                _g2d.dispose();
+                throw e;
+            }
+        }
 
 		@Override
 		public Graphics2D getGraphics() {
 			return _g2d;
+		}
+		
+		/**
+		 * Releases the native resources behind the page image. Only call this once the page has
+		 * been saved, as the image is unusable afterwards.
+		 */
+		public void flush() {
+			_img.flush();
 		}
 
 		public void save() {
@@ -71,15 +71,15 @@ public class QtPageProcessor implements FSPageProcessor {
 			} catch (IOException e) {
 				throw new RuntimeException("Couldn't write page image to output stream", e);
 			} finally {
-				if (os != null)
-					try {
-						os.close();
-					} catch (IOException e) {
-					}
+                OpenUtil.closeQuietly(os);
 			}
 		}
 	}
-
+	
+	private final FSPageOutputStreamSupplier _osFactory;
+	private final int _imageType;
+	private final String _imageFormat;
+	
 	/**
 	 * Creates a page processor which saves each page as an image.
 	 * 
@@ -88,25 +88,32 @@ public class QtPageProcessor implements FSPageProcessor {
 	 * @param imageType   must be a constant from the BufferedImage class.
 	 * @param imageFormat must be a format such as png or jpeg
 	 */
-	public QtPageProcessor(FSPageOutputStreamSupplier osFactory, int imageType, String imageFormat) {
+	public JhtmlPageProcessor(FSPageOutputStreamSupplier osFactory, int imageType, String imageFormat) {
 		_osFactory = osFactory;
 		_imageType = imageType;
-		this._scale = 1;
 		_imageFormat = imageFormat;
+		_scale = 1;
 	}
 
-	public QtPageProcessor(FSPageOutputStreamSupplier _osFactory, int _imageType, double _scale, String _imageFormat) {
+	private final double _scale;
+	private List<JhtmlPage> _pages = new ArrayList<>();
+	public JhtmlPageProcessor(FSPageOutputStreamSupplier _osFactory, int _imageType, double _scale, String _imageFormat) {
 		this._osFactory = _osFactory;
 		this._imageType = _imageType;
 		this._scale = _scale;
 		this._imageFormat = _imageFormat;
 	}
-
+	public List<BufferedImage> getPageImages() {
+		List<BufferedImage> images = new ArrayList<>();
+		for (JhtmlPage page : _pages) {
+			images.add(page._img);
+		}
+		return images;
+	}
+	
 	/**
 	 * Create a graphics device that can be supplied to useLayoutGraphics.
 	 * The caller is responsible for calling dispose on the returned device.
-	 * 
-	 * @return Graphics2D
 	 */
 	public Graphics2D createLayoutGraphics() {
 		BufferedImage bf = new BufferedImage(1, 1, _imageType);
@@ -115,23 +122,18 @@ public class QtPageProcessor implements FSPageProcessor {
 
 	@Override
 	public FSPage createPage(int zeroBasedPageNumber, int width, int height) {
-		QtPage qtPage = new QtPage(zeroBasedPageNumber, (int) (width * _scale), (int) (height * _scale), _osFactory, _imageType, _imageFormat);
+		JhtmlPage qtPage = new JhtmlPage(zeroBasedPageNumber, (int) (width * _scale), (int) (height * _scale), _osFactory, _imageType, _imageFormat);
 		_pages.add(qtPage);
 		return qtPage;
 	}
 
 	@Override
 	public void finishPage(FSPage pg) {
-		QtPage page = (QtPage) pg;
+		JhtmlPage page = (JhtmlPage) pg;
 		page.getGraphics().dispose();
 		page.save();
+		page.flush();
 	}
 	
-	public List<BufferedImage> getPageImages() {
-		List<BufferedImage> images = new ArrayList<>();
-		for (QtPage page : _pages) {
-			images.add(page._img);
-		}
-		return images;
-	}
+
 }

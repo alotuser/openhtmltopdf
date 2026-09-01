@@ -13,7 +13,7 @@ public class JpdfTest {
 		URL fonts= ResourceUtil.getResource("fonts");
 		 
 		
-		JhtmlRender htmlRender = JhtmlRender.create();
+		JhtmlKit htmlRender = JhtmlKit.create();
 		htmlRender.addFontDirectory(fonts.getPath());
 		htmlRender.setLoggingEnabled(true);
 		

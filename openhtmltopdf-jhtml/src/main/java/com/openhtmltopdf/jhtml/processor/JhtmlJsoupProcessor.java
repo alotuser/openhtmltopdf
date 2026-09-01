@@ -12,16 +12,16 @@ import org.jsoup.nodes.Document.OutputSettings.Syntax;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import com.openhtmltopdf.jhtml.renderer.AsRenderer;
+import com.openhtmltopdf.jhtml.JhtmlRenderer;
 import com.openhtmltopdf.render.BlockBox;
 import com.openhtmltopdf.render.Box;
 
 /**
  * An AsProcessor implementation that uses Jsoup to parse and manipulate HTML, adding unique IDs to elements and allowing for element retrieval based on various criteria.
  */
-public class AsJsoupProcessor implements AsProcessor {
+public class JhtmlJsoupProcessor implements JhtmlProcessor {
 
-	private AsRenderer asRenderer;
+	private JhtmlRenderer jhtmlRenderer;
 	private Document _doc;
 
 	private Document processHtmlWithIds(String html, String idAttribute) {
@@ -60,9 +60,9 @@ public class AsJsoupProcessor implements AsProcessor {
 	}
 
 	@Override
-	public void asRenderer(AsRenderer asRenderer) {
+	public void jhtmlRenderer(JhtmlRenderer jhtmlRenderer) {
 
-		this.asRenderer = asRenderer;
+		this.jhtmlRenderer = jhtmlRenderer;
 
 	}
 
@@ -241,7 +241,7 @@ public class AsJsoupProcessor implements AsProcessor {
 		String jbi = element.attr(BlockBox.JHTML_BOX_ID);
 		if (jbi == null)
 			return null;
-		return getContentAreaEdge(asRenderer.getRenderingContext().getBoxById(jbi));
+		return getContentAreaEdge(jhtmlRenderer.getRenderingContext().getBoxById(jbi));
 	}
 
 	/**
@@ -253,7 +253,7 @@ public class AsJsoupProcessor implements AsProcessor {
 	public Rectangle getContentAreaEdge(Box box) {
 		if (box == null)
 			return null;
-		return asRenderer.getContentAreaEdge(box);
+		return jhtmlRenderer.getContentAreaEdge(box);
 	}
 
 	/**

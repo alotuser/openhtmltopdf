@@ -1,4 +1,4 @@
-package com.openhtmltopdf.jhtml.render;
+package com.openhtmltopdf.jhtml;
 
 import java.awt.image.BufferedImage;
 import java.io.FileNotFoundException;
@@ -19,7 +19,7 @@ import com.openhtmltopdf.util.XRLog;
 /**
  * Java2DUserAgent is not used directly because we need to override getImageResource() to support OkHttpUtil for http/https resources.
  */
-public class AsUserAgent extends Java2DUserAgent {
+public class JhtmlUserAgent extends Java2DUserAgent {
 
 	@Override
 	public ImageResource getImageResource(String uri, ExternalResourceType type) {

@@ -1,4 +1,4 @@
-package com.openhtmltopdf.jhtml.factory;
+package com.openhtmltopdf.jhtml;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -30,13 +30,13 @@ import com.openhtmltopdf.util.LogMessageId;
 import com.openhtmltopdf.util.SVGUriDetector;
 import com.openhtmltopdf.util.XRLog;
 
-public class AsReplacedElementFactory implements ReplacedElementFactory {
+public class JhtmlReplacedElementFactory implements ReplacedElementFactory {
     private final SVGDrawer _svgImpl;
     private final FSObjectDrawerFactory _objectDrawerFactory;
     private final SVGDrawer _mathMLImpl;
     private final Map<SizedImageCacheKey, ReplacedElement> _sizedImageCache = new HashMap<>();
 
-    public AsReplacedElementFactory(
+    public JhtmlReplacedElementFactory(
             SVGDrawer svgImpl,
             FSObjectDrawerFactory objectDrawerFactory,
             SVGDrawer mathMLImpl) {

@@ -1,4 +1,4 @@
-package com.openhtmltopdf.jhtml.renderer;
+package com.openhtmltopdf.jhtml;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
@@ -9,18 +9,10 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
-import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.xml.sax.InputSource;
 
 import com.openhtmltopdf.bidi.BidiReorderer;
@@ -30,7 +22,6 @@ import com.openhtmltopdf.bidi.SimpleBidiReorderer;
 import com.openhtmltopdf.context.StyleReference;
 import com.openhtmltopdf.css.constants.IdentValue;
 import com.openhtmltopdf.css.style.CalculatedStyle;
-import com.openhtmltopdf.css.style.CssContext;
 import com.openhtmltopdf.extend.FSDOMMutator;
 import com.openhtmltopdf.extend.FSObjectDrawerFactory;
 import com.openhtmltopdf.extend.NamespaceHandler;
@@ -41,14 +32,11 @@ import com.openhtmltopdf.java2d.Java2DOutputDevice;
 import com.openhtmltopdf.java2d.Java2DTextRenderer;
 import com.openhtmltopdf.java2d.api.FSPage;
 import com.openhtmltopdf.java2d.api.FSPageProcessor;
-import com.openhtmltopdf.jhtml.builder.AsRendererBuilder.AsRendererBuilderState;
-import com.openhtmltopdf.jhtml.factory.AsReplacedElementFactory;
-import com.openhtmltopdf.jhtml.render.AsUserAgent;
+import com.openhtmltopdf.jhtml.api.JhtmlRendererBuilderState;
 import com.openhtmltopdf.layout.BoxBuilder;
 import com.openhtmltopdf.layout.Layer;
 import com.openhtmltopdf.layout.LayoutContext;
 import com.openhtmltopdf.layout.SharedContext;
-import com.openhtmltopdf.layout.Styleable;
 import com.openhtmltopdf.outputdevice.helper.AddedFont;
 import com.openhtmltopdf.outputdevice.helper.BaseDocument;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FontStyle;
@@ -59,7 +47,6 @@ import com.openhtmltopdf.outputdevice.helper.PageDimensions;
 import com.openhtmltopdf.outputdevice.helper.UnicodeImplementation;
 import com.openhtmltopdf.render.BlockBox;
 import com.openhtmltopdf.render.Box;
-import com.openhtmltopdf.render.InlineLayoutBox;
 import com.openhtmltopdf.render.PageBox;
 import com.openhtmltopdf.render.RenderingContext;
 import com.openhtmltopdf.render.ViewportBox;
@@ -75,7 +62,7 @@ import com.openhtmltopdf.util.OpenUtil;
 import com.openhtmltopdf.util.ThreadCtx;
 import com.openhtmltopdf.util.XRLog;
 
-public class AsRenderer implements Closeable {
+public class JhtmlRenderer implements Closeable {
 
     private final List<FSDOMMutator> _domMutators;
     private final SVGDrawer _mathMLImpl;
@@ -105,8 +92,8 @@ public class AsRenderer implements Closeable {
     /**
 	 * Subject to change. Not public API. Used exclusively by the Java2DRendererBuilder class. 
 	 */
-	public AsRenderer(BaseDocument doc, UnicodeImplementation unicode, PageDimensions pageSize, 
-			AsRendererBuilderState state, Closeable diagnosticConsumer) {
+	public JhtmlRenderer(BaseDocument doc, UnicodeImplementation unicode, PageDimensions pageSize, 
+			JhtmlRendererBuilderState state, Closeable diagnosticConsumer) {
 
 	    this.diagnosticConsumer = diagnosticConsumer;
 	    _pagingMode = state._pagingMode;
@@ -118,7 +105,7 @@ public class AsRenderer implements Closeable {
         _objectDrawerFactory = state._objectDrawerFactory;
 		_outputDevice = new Java2DOutputDevice(state._layoutGraphics);
 		
-		AsUserAgent uac = new AsUserAgent();//Java2DUserAgent is not used directly because we need to override getImageResource() to support OkHttpUtil for http/https resources.
+		JhtmlUserAgent uac = new JhtmlUserAgent();//Java2DUserAgent is not used directly because we need to override getImageResource() to support OkHttpUtil for http/https resources.
 
 		if (this._svgImpl != null) {
 			// So that SVGs used as CSS images, such as a background-image, can be drawn too.
@@ -171,7 +158,7 @@ public class AsRenderer implements Closeable {
         }
         
         
-		AsReplacedElementFactory replacedFactory = new AsReplacedElementFactory(this._svgImpl,
+		JhtmlReplacedElementFactory replacedFactory = new JhtmlReplacedElementFactory(this._svgImpl,
 				_objectDrawerFactory, this._mathMLImpl);
         _sharedContext.setReplacedElementFactory(replacedFactory);
         
@@ -533,7 +520,7 @@ public class AsRenderer implements Closeable {
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// AS Methods ///
+	/// 													Jhtml Methods		 																 ///
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private static final float DEFAULT_PD = 25.4F;
@@ -546,7 +533,16 @@ public class AsRenderer implements Closeable {
 	public Document getDocument() {
 		return _doc;
 	}
-
+	
+	/**
+	 * Get the rendering context used during layout and rendering.
+	 * 
+	 * @return The rendering context.
+	 */
+	public RenderingContext getRenderingContext() {
+		return _renderingContext;
+	}
+	
 	/**
 	 * Get the content area rectangle of a specific box.
 	 * 
@@ -556,236 +552,7 @@ public class AsRenderer implements Closeable {
 	public Rectangle getContentAreaEdge(Box box) {
 		return  box.getContentAreaEdge(box.getAbsX(), box.getAbsY(), _renderingContext);
 	}
-	/**
-	 * Get content area rectangles of elements matching the given predicate.
-	 * 
-	 * @param predicate The predicate to filter elements.
-	 * @return A map of elements to their content area rectangles.
-	 */
-	public Map<Element, Rectangle> getContentAreaEdge(Predicate<Element> predicate) {
-
-		Map<Element, Rectangle> result = new HashMap<Element, Rectangle>();
-
-		result.putAll(getRectangleList(_root.getLayer().getSortedLayers(Layer.NEGATIVE), predicate, _renderingContext));
-
-		result.putAll(getRectangleList(_root.getLayer().collectLayers(Layer.AUTO), predicate, _renderingContext));
-
-		result.putAll(getRectangleList(_root.getLayer().getSortedLayers(Layer.ZERO), predicate, _renderingContext));
-
-		result.putAll(getRectangleList(_root.getLayer().getSortedLayers(Layer.POSITIVE), predicate, _renderingContext));
-
-		return result;
-	}
-
-	/**
-	 * Get rectangles of elements matching the given predicate from the specified layers.
-	 * 
-	 * @param layers    The list of layers to search.
-	 * @param predicate The predicate to filter elements.
-	 * @param cssCtx    The CSS context for calculating content area edges.
-	 * @return A map of elements to their content area rectangles.
-	 */
-	Map<Element, Rectangle> getRectangleList(List<Layer> layers, Predicate<Element> predicate, CssContext cssCtx) {
-
-		Map<Element, Rectangle> result = new HashMap<Element, Rectangle>();
-		for (Layer layer : layers) {
-
-			Box master = layer.getMaster();
-			Element ele = master.getElement();
-
-			if (ele == null) {
-				continue;
-			}
-
-			if (predicate.test(ele)) {
-
-				result.put(ele, master.getContentAreaEdge(master.getAbsX(), master.getAbsY(), cssCtx));
-
-			}
-
-			println(ele);
-
-			List<Box> boxs = getBoxsByIds(master, predicate);
-			for (Box box : boxs) {
-				result.put(box.getElement(), box.getContentAreaEdge(box.getAbsX(), box.getAbsY(), cssCtx));
-			}
-
-		}
-
-		return result;
-
-	}
-	/**
-	 * Find rectangles of elements matching the given predicate.
-	 * @param predicate
-	 * @return A map of elements to their rectangles.
-	 */
-	public Map<Element, Rectangle> findElementRectangle(Predicate<Element> predicate) {
-
-		Map<Element, Rectangle> result = new HashMap<Element, Rectangle>();
-
-		List<Object> renderObjects = new ArrayList<>();
-		
-		findBoxs(_root, renderObjects);
-
-		List<Object> boxs = renderObjects.stream().filter(x -> {
-			if (x instanceof Box) {
-				Box b = (Box) x;
-				if (null != b.getElement()) {
-					return predicate.test(b.getElement());
-				}
-			}
-			return false;
-		}).collect(Collectors.toList());
-
-		for (Object box : boxs) {
-
-			Box master = (Box) box;
-			Element ele = master.getElement();
-
-			if (ele == null) {
-				continue;
-			}
-			result.put(ele, getContentAreaEdge(master));
-			
-		}
-		return result;
-
-	}
 	
-	/**
-	 * Recursively find boxes and add them to the output list.
-	 * 
-	 * @param parent The parent box to start from.
-	 * @param out    The output list to store found boxes.
-	 */
-	public void findBoxs(Box parent, List<Object> out) {
-		out.add(parent);
 
-		for (Box child : parent.getChildren()) {
-			findBoxs(child, out);
-		}
-
-		if (parent instanceof BlockBox && ((BlockBox) parent).getInlineContent() != null) {
-			for (Object child : ((BlockBox) parent).getInlineContent()) {
-				if (child instanceof Box) {
-					findBoxs((Box) child, out);
-				} else {
-					out.add(child);
-				}
-			}
-		}
-
-		if (parent instanceof InlineLayoutBox) {
-			for (Object child : ((InlineLayoutBox) parent).getInlineChildren()) {
-				if (child instanceof Box) {
-					findBoxs((Box) child, out);
-				} else {
-					out.add(child);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Convert attributes of a NamedNodeMap to a string representation.
-	 * 
-	 * @param attributes The NamedNodeMap containing attributes.
-	 * @return A string representation of the attributes.
-	 */
-	@SuppressWarnings("unused")
-	private String getAttrStr(NamedNodeMap attributes) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < attributes.getLength(); i++) {
-			Attr attr = (Attr) attributes.item(i);
-			sb.append(attr.getName()).append("=").append(attr.getValue()).append(";");
-		}
-		return sb.toString();
-
-	}
-
-	/**
-	 * Recursively get boxes by IDs matching the given predicate.
-	 * 
-	 * @param rootBox   The root box to start from.
-	 * @param predicate The predicate to filter elements.
-	 * @return A list of boxes matching the predicate.
-	 */
-	private List<Box> getBoxsByIds(Box rootBox, Predicate<Element> predicate) {
-		List<Box> result = new ArrayList<>();
-		if (rootBox.getChildCount() > 0) {
-			for (Box box : rootBox.getChildren()) {
-
-				Element ele = box.getElement();
-				if (ele == null) {
-					continue;
-				}
-
-				println(ele);
-
-				if (predicate.test(box.getElement())) {
-
-					result.add(box);
-
-				}
-				for (Box child : box.getChildren()) {
-					result.addAll(getBoxsByIds(child, predicate));
-				}
-			}
-		}
-
-		if (rootBox instanceof BlockBox) {
-
-			BlockBox blockBox = (BlockBox) rootBox;
-			if (null != blockBox && null != blockBox.getInlineContent()) {
-				List<Styleable> styleables = blockBox.getInlineContent();
-
-				for (Styleable styleable : styleables) {
-
-					if (styleable instanceof BlockBox) {
-
-						BlockBox sb = (BlockBox) styleable;
-						Element sbele = sb.getElement();
-						if (sbele == null) {
-							continue;
-						}
-
-						println(sbele);
-
-						if (predicate.test(sb.getElement())) {
-
-							result.add(sb);
-
-						}
-					}
-
-				}
-
-			}
-
-		}
-
-		return result;
-	}
-
-	/**
-	 * Print the tag name and attributes of an element.
-	 * 
-	 * @param ele The element to print.
-	 */
-	private void println(Element ele) {
-
-		// System.out.println(ele.getTagName() + "[" + getAttrStr(ele.getAttributes()) + "]");
-
-	}
-
-	/**
-	 * Get the rendering context used during layout and rendering.
-	 * 
-	 * @return The rendering context.
-	 */
-	public RenderingContext getRenderingContext() {
-		return _renderingContext;
-	}
 
 }
