@@ -1,4 +1,4 @@
-package com.openhtmltopdf.java2d;
+package com.openhtmltopdf.jhtml.factory;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -8,9 +8,18 @@ import java.util.logging.Level;
 
 import org.w3c.dom.Element;
 
-import com.openhtmltopdf.extend.*;
+import com.openhtmltopdf.extend.FSImage;
+import com.openhtmltopdf.extend.FSObjectDrawer;
+import com.openhtmltopdf.extend.FSObjectDrawerFactory;
+import com.openhtmltopdf.extend.ReplacedElement;
+import com.openhtmltopdf.extend.ReplacedElementFactory;
+import com.openhtmltopdf.extend.SVGDrawer;
+import com.openhtmltopdf.extend.UserAgentCallback;
+import com.openhtmltopdf.java2d.Java2DObjectDrawerReplacedElement;
+import com.openhtmltopdf.java2d.Java2DSVGReplacedElement;
 import com.openhtmltopdf.java2d.image.AWTFSImage;
 import com.openhtmltopdf.java2d.image.ImageReplacedElement;
+import com.openhtmltopdf.jhtml.swing.dither.DitherFactory;
 import com.openhtmltopdf.layout.LayoutContext;
 import com.openhtmltopdf.outputdevice.helper.ExternalResourceType;
 import com.openhtmltopdf.render.BlockBox;
@@ -21,13 +30,13 @@ import com.openhtmltopdf.util.LogMessageId;
 import com.openhtmltopdf.util.SVGUriDetector;
 import com.openhtmltopdf.util.XRLog;
 
-public class Java2DReplacedElementFactory implements ReplacedElementFactory {
+public class AsReplacedElementFactory implements ReplacedElementFactory {
     private final SVGDrawer _svgImpl;
     private final FSObjectDrawerFactory _objectDrawerFactory;
     private final SVGDrawer _mathMLImpl;
     private final Map<SizedImageCacheKey, ReplacedElement> _sizedImageCache = new HashMap<>();
 
-    public Java2DReplacedElementFactory(
+    public AsReplacedElementFactory(
             SVGDrawer svgImpl,
             FSObjectDrawerFactory objectDrawerFactory,
             SVGDrawer mathMLImpl) {
@@ -133,6 +142,9 @@ public class Java2DReplacedElementFactory implements ReplacedElementFactory {
             return null;
         }
 
+        //7G add  dither 
+        newImg = DitherFactory.getDither().toImg(elem, width, height, newImg);
+        
         if (width > -1 || height > -1) {
             XRLog.log(Level.FINE, LogMessageId.LogMessageId4Param.LOAD_IMAGE_LOADER_SCALING_URI_TO,
                     this, uri, width, height);

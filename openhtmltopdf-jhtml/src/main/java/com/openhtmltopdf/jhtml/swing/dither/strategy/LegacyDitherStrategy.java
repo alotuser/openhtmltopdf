@@ -1,4 +1,4 @@
-package com.openhtmltopdf.swing.dither.strategy;
+package com.openhtmltopdf.jhtml.swing.dither.strategy;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -6,8 +6,10 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.w3c.dom.Element;
-import com.openhtmltopdf.swing.dither.BaseDither;
+
+import com.openhtmltopdf.jhtml.swing.dither.BaseDither;
 
 /**
  * Legacy Floyd-Steinberg dither strategy for backward-compatibility with old templates.

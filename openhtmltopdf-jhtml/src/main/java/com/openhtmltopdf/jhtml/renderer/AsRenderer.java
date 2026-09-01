@@ -38,11 +38,11 @@ import com.openhtmltopdf.extend.SVGDrawer;
 import com.openhtmltopdf.java2d.Java2DFontContext;
 import com.openhtmltopdf.java2d.Java2DFontResolver;
 import com.openhtmltopdf.java2d.Java2DOutputDevice;
-import com.openhtmltopdf.java2d.Java2DReplacedElementFactory;
 import com.openhtmltopdf.java2d.Java2DTextRenderer;
 import com.openhtmltopdf.java2d.api.FSPage;
 import com.openhtmltopdf.java2d.api.FSPageProcessor;
 import com.openhtmltopdf.jhtml.builder.AsRendererBuilder.AsRendererBuilderState;
+import com.openhtmltopdf.jhtml.factory.AsReplacedElementFactory;
 import com.openhtmltopdf.jhtml.render.AsUserAgent;
 import com.openhtmltopdf.layout.BoxBuilder;
 import com.openhtmltopdf.layout.Layer;
@@ -171,7 +171,7 @@ public class AsRenderer implements Closeable {
         }
         
         
-		Java2DReplacedElementFactory replacedFactory = new Java2DReplacedElementFactory(this._svgImpl,
+		AsReplacedElementFactory replacedFactory = new AsReplacedElementFactory(this._svgImpl,
 				_objectDrawerFactory, this._mathMLImpl);
         _sharedContext.setReplacedElementFactory(replacedFactory);
         

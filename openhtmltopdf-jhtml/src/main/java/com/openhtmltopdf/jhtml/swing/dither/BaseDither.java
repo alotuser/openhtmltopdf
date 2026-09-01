@@ -1,4 +1,4 @@
-package com.openhtmltopdf.swing.dither;
+package com.openhtmltopdf.jhtml.swing.dither;
 
 import java.awt.image.BufferedImage;
 import org.w3c.dom.Element;

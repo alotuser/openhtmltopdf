@@ -1,11 +1,13 @@
-package com.openhtmltopdf.swing.dither;
-
-import com.openhtmltopdf.swing.dither.strategy.LegacyDitherStrategy;
-import com.openhtmltopdf.swing.dither.strategy.SimpleDitherStrategy;
+package com.openhtmltopdf.jhtml.swing.dither;
 
 import java.awt.image.BufferedImage;
 
 import org.w3c.dom.Element;
+
+import com.openhtmltopdf.jhtml.swing.dither.strategy.LegacyDitherStrategy;
+import com.openhtmltopdf.jhtml.swing.dither.strategy.SimpleDitherStrategy;
+
+ 
 
 /**
  * Dither strategy factory.

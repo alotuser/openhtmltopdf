@@ -1,4 +1,4 @@
-package com.openhtmltopdf.swing.dither.strategy;
+package com.openhtmltopdf.jhtml.swing.dither.strategy;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -10,7 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.w3c.dom.Element;
-import com.openhtmltopdf.swing.dither.BaseDither;
+
+import com.openhtmltopdf.jhtml.swing.dither.BaseDither;
 
 /**
  * Multi-color error diffusion dither strategy
