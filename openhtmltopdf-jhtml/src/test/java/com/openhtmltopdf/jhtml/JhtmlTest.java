@@ -9,7 +9,10 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
-import com.openhtmltopdf.jhtml.processor.AsJsoupProcessor;
+import com.openhtmltopdf.jhtml.processor.JhtmlJsoupProcessor;
+import com.openhtmltopdf.jhtml.swing.dither.strategy.SimpleDitherStrategy;
+import com.openhtmltopdf.jhtml.swing.dither.strategy.SimpleDitherStrategy.ColorMode;
+import com.openhtmltopdf.jhtml.swing.dither.strategy.SimpleDitherStrategy.DitherKernel;
 import com.openhtmltopdf.jhtml.util.ImageCropUtil;
 
 import cn.alotus.core.io.resource.ResourceUtil;
@@ -17,18 +20,20 @@ import cn.alotus.core.io.resource.ResourceUtil;
 public class JhtmlTest {
 
 	public static void main(String[] args) throws IOException {
+		
+		 
 		String resHtml="1.html";
 		String html = ResourceUtil.readUtf8Str(resHtml);
 		URL fonts= ResourceUtil.getResource("fonts");
 		
-		JhtmlRender htmlRender = JhtmlRender.create(BufferedImage.TYPE_INT_RGB);
+		JhtmlKit htmlRender = JhtmlKit.create(BufferedImage.TYPE_INT_RGB);
 		htmlRender.addFontDirectory(fonts.getPath());
-		htmlRender.setPageWidth(400f);
+		htmlRender.setPageWidth(800f);
 		htmlRender.setPageHeight(300f);
 		htmlRender.setScale(1f);
 		htmlRender.setLoggingEnabled(true);
 		
-		AsJsoupProcessor ajp= htmlRender.useJsoup();
+		JhtmlJsoupProcessor ajp= htmlRender.useJsoup();
 		
 		// htmlRender.toImage(html, BuilderConfig.WITH_CUSTOM);
 
@@ -42,18 +47,14 @@ public class JhtmlTest {
 		String className=".original-price";
 
 		Map<org.jsoup.nodes.Element, Rectangle> mers = ajp.selectFirst(className);
-// 
-//		System.out.println(mers);
-//
+ 
+		System.out.println(mers);
 		Rectangle f = mers.values().stream().findFirst().get();
-//
 		BufferedImage original = ImageIO.read(new File("D:\\"+resHtml+".png"));
-
 		Rectangle rect = new Rectangle(f.x, f.y, f.width, f.height);
-
 		BufferedImage cropped = ImageCropUtil.cropImage(original, rect);
 		ImageIO.write(cropped, "png", new File("D:\\"+resHtml+"-cropped.png"));
 
 	}
-
+	
 }
