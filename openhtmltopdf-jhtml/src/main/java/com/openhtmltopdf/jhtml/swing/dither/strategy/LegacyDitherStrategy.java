@@ -1,8 +1,6 @@
 package com.openhtmltopdf.jhtml.swing.dither.strategy;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
@@ -215,31 +213,7 @@ public class LegacyDitherStrategy implements BaseDither {
         }
         return bestIndex;
     }
-
-	/**
-	 * Resize source image using bicubic interpolation
-	 * @param src source BufferedImage
-	 * @param targetW target pixel width
-	 * @param targetH target pixel height
-	 * @return resized 3BYTE_BGR BufferedImage
-	 */
-	private static BufferedImage scaleImage(BufferedImage src, int targetW, int targetH) {
-		if (src.getWidth() == targetW && src.getHeight() == targetH) {
-			return src;
-		}
-		BufferedImage dst = new BufferedImage(targetW, targetH, BufferedImage.TYPE_3BYTE_BGR);
-		Graphics2D g2d = dst.createGraphics();
-		try {
-			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-			g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-			g2d.drawImage(src, 0, 0, targetW, targetH, null);
-		} finally {
-			g2d.dispose();
-		}
-		return dst;
-	}
-
+ 
 	/**
 	 * {@inheritDoc}
 	 * <p>Only processes image when dither-color attribute exists. Ignores dither-kernel and dither-gamma attributes.</p>
@@ -258,7 +232,8 @@ public class LegacyDitherStrategy implements BaseDither {
 			}
 			try {
 				ColorEnum colorMode = ColorEnum.valueOf(colorAttr.trim().toUpperCase());
-				BufferedImage nimg = scaleImage(newImg, width, height);
+				BufferedImage fimg = flatToWhite(newImg);
+				BufferedImage nimg = scaleImage(fimg, width, height);
 				return getPerfectImageData(nimg, colorMode);
 			} catch (Exception e) {
 				throw new IllegalArgumentException("Invalid palette or kernel attribute: " + colorAttr, e);
