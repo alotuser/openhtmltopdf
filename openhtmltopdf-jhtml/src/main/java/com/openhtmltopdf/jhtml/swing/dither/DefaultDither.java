@@ -6,18 +6,26 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 
+import org.w3c.dom.Element;
+
 public interface DefaultDither {
 
 	
     String DITHER_COLOR_ATTR  = "dither-color";
     String DITHER_GAMMA_ATTR  = "dither-gamma";
     String DITHER_KERNEL_ATTR = "dither-kernel";
+    String DITHER_CACHE_ATTR  = "dither-cache";
 
-    /** Default gamma correction factor; 0.7-0.9 recommended for e‑ink displays; use 1.0f to disable gamma correction */
+    /** Default gamma correction factor; 0.7-0.9 recommended for e-ink displays; use 1.0f to disable gamma correction */
     final float DEFAULT_GAMMA = 0.85f;
     
     
-    
+	default boolean hasCache(Element elem) {
+
+		String cacheAttr = elem.getAttribute(DITHER_CACHE_ATTR);
+		return null==cacheAttr ||Boolean.parseBoolean(cacheAttr);
+		
+	};
     
 
     /**

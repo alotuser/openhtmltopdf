@@ -10,8 +10,6 @@ import org.w3c.dom.Element;
  */
 public interface BaseDither extends DefaultDither{
 
-
-
     /**
      * Perform image dither according to attributes on Element tag.
      * @param elem html img element
@@ -21,6 +19,8 @@ public interface BaseDither extends DefaultDither{
      * @return dithered image; return original image if dither conditions are not satisfied
      */
     BufferedImage toImg(Element elem, int width, int height, BufferedImage newImg);
+
+	
     
     
     

@@ -19,6 +19,7 @@ import com.openhtmltopdf.java2d.Java2DObjectDrawerReplacedElement;
 import com.openhtmltopdf.java2d.Java2DSVGReplacedElement;
 import com.openhtmltopdf.java2d.image.AWTFSImage;
 import com.openhtmltopdf.java2d.image.ImageReplacedElement;
+import com.openhtmltopdf.jhtml.swing.dither.BaseDither;
 import com.openhtmltopdf.jhtml.swing.dither.DitherFactory;
 import com.openhtmltopdf.layout.LayoutContext;
 import com.openhtmltopdf.outputdevice.helper.ExternalResourceType;
@@ -110,8 +111,10 @@ public class JhtmlReplacedElementFactory implements ReplacedElementFactory {
 
     private ReplacedElement replaceImage(Element elem, String uri, int width, int height, BlockBox box, LayoutContext context, UserAgentCallback uac) {
         ReplacedElement replaced = _sizedImageCache.get(new SizedImageCacheKey(uri, width, height));
-
-        if (replaced != null) {
+        
+        BaseDither dither=  DitherFactory.getDither();
+ 
+        if (replaced != null&& dither.hasCache(elem)) {
             return replaced;
         }
 
@@ -143,7 +146,7 @@ public class JhtmlReplacedElementFactory implements ReplacedElementFactory {
         }
 
         //7G add  dither 
-        newImg = DitherFactory.getDither().toImg(elem, width, height, newImg);
+        newImg = dither.toImg(elem, width, height, newImg);
         
         if (width > -1 || height > -1) {
             XRLog.log(Level.FINE, LogMessageId.LogMessageId4Param.LOAD_IMAGE_LOADER_SCALING_URI_TO,
