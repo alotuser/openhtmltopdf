@@ -112,7 +112,8 @@ public class JhtmlReplacedElementFactory implements ReplacedElementFactory {
     private ReplacedElement replaceImage(Element elem, String uri, int width, int height, BlockBox box, LayoutContext context, UserAgentCallback uac) {
         ReplacedElement replaced = _sizedImageCache.get(new SizedImageCacheKey(uri, width, height));
         
-        BaseDither dither=  DitherFactory.getDither();
+        //7G add  dither 
+        BaseDither dither=  DitherFactory.getDither(); 
  
         if (replaced != null&& dither.hasCache(elem)) {
             return replaced;

@@ -19,14 +19,28 @@ public interface DefaultDither {
     /** Default gamma correction factor; 0.7-0.9 recommended for e-ink displays; use 1.0f to disable gamma correction */
     final float DEFAULT_GAMMA = 0.85f;
     
-    
+   /**
+	 * Check if caching is enabled for the given element.
+	 *  @param elem the element to check
+	 *  @return true if caching is enabled, false otherwise
+	 */
 	default boolean hasCache(Element elem) {
 
-		String cacheAttr = elem.getAttribute(DITHER_CACHE_ATTR);
-		return null==cacheAttr ||Boolean.parseBoolean(cacheAttr);
+		String cacheAttr = getCacheName(elem);
+		return null==cacheAttr || Boolean.parseBoolean(cacheAttr);
 		
 	};
-    
+	
+	/**
+	 * Get the cache name for the given element.
+	 * @param elem the element to get the cache name for
+	 * @return the cache name, or null if caching is disabled
+	 */
+	default String getCacheName(Element elem) {
+
+		return elem.getAttribute(DITHER_CACHE_ATTR);
+		
+	};
 
     /**
 	 * High-quality bicubic image scaling, outputs TYPE_3BYTE_BGR
@@ -87,6 +101,16 @@ public interface DefaultDither {
 	 * @return opaque BufferedImage with white background
 	 */
 	default BufferedImage flatToWhite(BufferedImage src) {
+	    return toBackColor(src, Color.WHITE);
+	}
+	
+	/**
+	 * Convert image with alpha channel to opaque image with specified background color
+	 * @param src source BufferedImage
+	 * @param backColor background color to use for transparent pixels
+	 * @return opaque BufferedImage with specified background color
+	 */
+	default BufferedImage toBackColor(BufferedImage src, Color backColor) {
 	    if (src.getTransparency() == BufferedImage.OPAQUE) {
 	        return src;
 	    }
@@ -97,7 +121,7 @@ public interface DefaultDither {
 
 	    Graphics2D g2d = whiteBg.createGraphics();
 	    try {
-	        g2d.setColor(Color.WHITE);
+	        g2d.setColor(backColor);
 	        g2d.fillRect(0, 0, width, height);
 
 	        g2d.drawImage(src, 0, 0, null);

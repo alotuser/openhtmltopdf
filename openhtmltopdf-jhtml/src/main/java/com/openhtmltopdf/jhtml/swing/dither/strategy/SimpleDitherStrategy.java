@@ -479,8 +479,10 @@ public class SimpleDitherStrategy implements BaseDither {
 			if (src == null) {
 				throw new IllegalArgumentException("src image must not be null");
 			}
-			if (targetWidth <= 0 || targetHeight <= 0) {
-				throw new IllegalArgumentException("targetWidth and targetHeight must > 0");
+			if (targetWidth > 0 || targetHeight > 0) {
+				if (outHardwareIndexBytes != null && outHardwareIndexBytes.length < targetWidth * targetHeight) {
+					throw new IllegalArgumentException("outHardwareIndexBytes buffer length too small");
+				}
 			}
 			if (colorMode == null) {
 				throw new IllegalArgumentException("colorMode must not be null");
@@ -488,14 +490,17 @@ public class SimpleDitherStrategy implements BaseDither {
 			if (kernel == null) {
 				throw new IllegalArgumentException("kernel must not be null");
 			}
-			if (outHardwareIndexBytes != null && outHardwareIndexBytes.length < targetWidth * targetHeight) {
-				throw new IllegalArgumentException("outHardwareIndexBytes buffer length too small");
-			}
+		
 
-			BufferedImage prepared =flatToWhite(src);
-			BufferedImage scaled = scaleImage(prepared, targetWidth, targetHeight);
-			BufferedImage gammaImg = applyGamma(scaled, gamma);
-			return doDitherCore(gammaImg, colorMode, kernel, outHardwareIndexBytes);
+			BufferedImage temp =flatToWhite(src);
+			
+			if (targetWidth > 0 || targetHeight > 0) {
+				temp = scaleImage(temp, targetWidth, targetHeight);
+			}
+			
+			temp = applyGamma(temp, gamma);
+			
+			return doDitherCore(temp, colorMode, kernel, outHardwareIndexBytes);
 		}
 		
 		/**

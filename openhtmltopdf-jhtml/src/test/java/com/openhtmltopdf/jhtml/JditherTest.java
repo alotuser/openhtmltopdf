@@ -12,17 +12,19 @@ import com.openhtmltopdf.jhtml.swing.dither.strategy.SimpleDitherStrategy.Dither
 
 public class JditherTest {
 
-	
 	public static void main(String[] args) throws IOException {
 		ColorMode colorMode = ColorMode.BWRY;
-		DitherKernel ditherKernel = DitherKernel.SIERRA_LITE;
-		float useGamma = 1;
-		 
-		BufferedImage newImgs=ImageIO.read(new File("D:\\777.png"));
 
-		BufferedImage newImg3=SimpleDitherStrategy.Builder.create().src(newImgs).targetSize(800, 480).colorMode(colorMode).kernel(ditherKernel).gamma(useGamma).dither();
-		
-		
-		ImageIO.write(newImg3, "png", new File("D:\\777.html-dither.png"));
+		DitherKernel ditherKernel = DitherKernel.SIERRA_LITE;
+
+		float useGamma = 1;
+
+		BufferedImage newImgs = ImageIO.read(new File("D:\\6.html.png"));
+
+		BufferedImage newImg3 = SimpleDitherStrategy.Builder.create().src(newImgs).colorMode(colorMode).kernel(ditherKernel).gamma(useGamma).dither();
+
+		ImageIO.write(newImg3, "png", new File("D:\\6.html-dither.png"));
+
+		System.out.println("done");
 	}
 }
