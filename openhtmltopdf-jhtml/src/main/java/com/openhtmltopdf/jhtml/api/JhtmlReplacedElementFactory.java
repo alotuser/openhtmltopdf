@@ -1,4 +1,4 @@
-package com.openhtmltopdf.jhtml;
+package com.openhtmltopdf.jhtml.api;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -30,7 +30,9 @@ import com.openhtmltopdf.resource.XMLResource;
 import com.openhtmltopdf.util.LogMessageId;
 import com.openhtmltopdf.util.SVGUriDetector;
 import com.openhtmltopdf.util.XRLog;
-
+/**
+ * Java2DReplacedElementFactory is a ReplacedElementFactory that creates ReplacedElements for SVG, MathML, Object and Image elements.
+ */
 public class JhtmlReplacedElementFactory implements ReplacedElementFactory {
     private final SVGDrawer _svgImpl;
     private final FSObjectDrawerFactory _objectDrawerFactory;

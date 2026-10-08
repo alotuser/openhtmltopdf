@@ -7,7 +7,6 @@ import java.io.IOException;
 
 import com.openhtmltopdf.extend.OutputDevice;
 import com.openhtmltopdf.java2d.api.FSPageProcessor;
-import com.openhtmltopdf.jhtml.JhtmlRenderer;
 import com.openhtmltopdf.layout.Layer;
 import com.openhtmltopdf.outputdevice.helper.BaseDocument;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder;
@@ -15,7 +14,9 @@ import com.openhtmltopdf.outputdevice.helper.PageDimensions;
 import com.openhtmltopdf.outputdevice.helper.UnicodeImplementation;
 import com.openhtmltopdf.render.RenderingContext;
 import com.openhtmltopdf.swing.EmptyReplacedElement;
-
+/**
+ * Java2DRendererBuilder Build a Jhtml renderer for a given HTML. The renderer allows to get a
+ */
 public class JhtmlRendererBuilder extends BaseRendererBuilder<JhtmlRendererBuilder, JhtmlRendererBuilderState> {
 	public JhtmlRendererBuilder() {
 		super(new JhtmlRendererBuilderState());

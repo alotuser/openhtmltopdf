@@ -1,139 +1,90 @@
 package com.openhtmltopdf.jhtml.api;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-
 import com.openhtmltopdf.java2d.api.FSPage;
-import com.openhtmltopdf.java2d.api.FSPageOutputStreamSupplier;
 import com.openhtmltopdf.java2d.api.FSPageProcessor;
-import com.openhtmltopdf.util.OpenUtil;
+
 /**
- * DefaultPageProcessor to render everything to buffered images
+ * BufferedImagePageProcessor  to render everything to buffered images
  */
 public class JhtmlPageProcessor implements FSPageProcessor {
+	private final double _scale;
+	private final int _imageType;
 
-	private class JhtmlPage implements FSPage {
-		private final BufferedImage _img;
-		private final Graphics2D _g2d;
-		private final int _pgNo;
-		private final FSPageOutputStreamSupplier _osf;
-		private final String _imgFrmt;
+	private final List<BufferedImagePage> _pages = new ArrayList<>();
 
-		public JhtmlPage(int pgNo, int w, int h, FSPageOutputStreamSupplier osFactory, int imageType, String imageFormat) {
-			_img = new BufferedImage(w, h, imageType);
-			_g2d = _img.createGraphics();
+	private class BufferedImagePage implements FSPage {
+        final BufferedImage _image;
+        Graphics2D graphics;
 
-            try {
-                if (_img.getColorModel().hasAlpha()) {
-                    /* We need to clear with white transparent */
-                    _g2d.setBackground(new Color(255, 255, 255, 0));
-                    _g2d.clearRect(0, 0, _img.getWidth(), _img.getHeight());
-                } else {
-                    _g2d.setColor(Color.WHITE);
-                    _g2d.fillRect(0, 0, _img.getWidth(), _img.getHeight());
-                }
-
-			_pgNo = pgNo;
-			_osf = osFactory;
-			_imgFrmt = imageFormat;
-
-            } catch (Throwable e) {
-                _g2d.dispose();
-                throw e;
-            }
-        }
+		BufferedImagePage(BufferedImage image) {
+			this._image = image;
+		}
 
 		@Override
 		public Graphics2D getGraphics() {
-			return _g2d;
-		}
-		
-		/**
-		 * Releases the native resources behind the page image. Only call this once the page has
-		 * been saved, as the image is unusable afterwards.
-		 */
-		public void flush() {
-			_img.flush();
-		}
+            if (graphics != null) {
+                return graphics;
+            }
 
-		public void save() {
-			OutputStream os = null;
-			try {
-				os = _osf.supply(_pgNo);
-				ImageIO.write(_img, _imgFrmt, os);
-			} catch (IOException e) {
-				throw new RuntimeException("Couldn't write page image to output stream", e);
-			} finally {
-                OpenUtil.closeQuietly(os);
+            graphics = _image.createGraphics();
+
+			if (_image.getColorModel().hasAlpha()) {
+				if(BufferedImage.TYPE_INT_ARGB==_imageType||_imageType==BufferedImage.TYPE_INT_ARGB_PRE) {
+					/* We need to clear with white transparent */
+					graphics.setBackground(new Color(255, 255, 255, 0));
+				}
+				graphics.clearRect(0, 0, _image.getWidth(), _image.getHeight());
+			} else {
+				graphics.setColor(Color.WHITE);
+				graphics.fillRect(0, 0, _image.getWidth(), _image.getHeight());
 			}
+
+			/*
+			 * Apply the scale on the bitmap
+			 */
+			graphics.scale(_scale, _scale);
+			return graphics;
 		}
-	}
-	
-	private final FSPageOutputStreamSupplier _osFactory;
-	private final int _imageType;
-	private final String _imageFormat;
-	
-	/**
-	 * Creates a page processor which saves each page as an image.
-	 * 
-	 * @param osFactory   must supply an output stream for each page. The os
-	 *                    will be closed by the page processor.
-	 * @param imageType   must be a constant from the BufferedImage class.
-	 * @param imageFormat must be a format such as png or jpeg
-	 */
-	public JhtmlPageProcessor(FSPageOutputStreamSupplier osFactory, int imageType, String imageFormat) {
-		_osFactory = osFactory;
-		_imageType = imageType;
-		_imageFormat = imageFormat;
-		_scale = 1;
 	}
 
-	private final double _scale;
-	private List<JhtmlPage> _pages = new ArrayList<>();
-	public JhtmlPageProcessor(FSPageOutputStreamSupplier _osFactory, int _imageType, double _scale, String _imageFormat) {
-		this._osFactory = _osFactory;
-		this._imageType = _imageType;
-		this._scale = _scale;
-		this._imageFormat = _imageFormat;
-	}
-	public List<BufferedImage> getPageImages() {
-		List<BufferedImage> images = new ArrayList<>();
-		for (JhtmlPage page : _pages) {
-			images.add(page._img);
-		}
-		return images;
-	}
-	
 	/**
-	 * Create a graphics device that can be supplied to useLayoutGraphics.
-	 * The caller is responsible for calling dispose on the returned device.
+	 *
+	 * @param imageType
+	 *            Type of the BufferedImage, e.g. BufferedImage#TYPE_INT_ARGB
+	 * @param scale
+	 *            scale factor. You can control what resolution of the images
+	 *            you want
 	 */
-	public Graphics2D createLayoutGraphics() {
-		BufferedImage bf = new BufferedImage(1, 1, _imageType);
-		return bf.createGraphics();
+	public JhtmlPageProcessor(int imageType, double scale) {
+		_imageType = imageType;
+		_scale = scale;
 	}
 
 	@Override
 	public FSPage createPage(int zeroBasedPageNumber, int width, int height) {
-		JhtmlPage qtPage = new JhtmlPage(zeroBasedPageNumber, (int) (width * _scale), (int) (height * _scale), _osFactory, _imageType, _imageFormat);
-		_pages.add(qtPage);
-		return qtPage;
+		BufferedImage image = new BufferedImage((int) (width * _scale), (int) (height * _scale), _imageType);
+		BufferedImagePage bufferedImagePage = new BufferedImagePage(image);
+		_pages.add(bufferedImagePage);
+		return bufferedImagePage;
 	}
 
-	@Override
-	public void finishPage(FSPage pg) {
-		JhtmlPage page = (JhtmlPage) pg;
-		page.getGraphics().dispose();
-		page.save();
-		page.flush();
-	}
-	
+    @Override
+    public void finishPage(FSPage pg) {
+        BufferedImagePage page = (BufferedImagePage) pg;
+        page.graphics.dispose();
+        page.graphics = null;
+    }
 
+	public List<BufferedImage> getPageImages() {
+		List<BufferedImage> images = new ArrayList<>();
+		for (BufferedImagePage page : _pages) {
+			images.add(page._image);
+		}
+		return images;
+	}
 }

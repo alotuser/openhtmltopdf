@@ -12,7 +12,7 @@ import org.jsoup.nodes.Document.OutputSettings.Syntax;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import com.openhtmltopdf.jhtml.JhtmlRenderer;
+import com.openhtmltopdf.jhtml.api.JhtmlRenderer;
 import com.openhtmltopdf.render.BlockBox;
 import com.openhtmltopdf.render.Box;
 

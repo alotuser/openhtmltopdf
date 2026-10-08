@@ -1,4 +1,4 @@
-package com.openhtmltopdf.jhtml;
+package com.openhtmltopdf.jhtml.api;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
@@ -32,7 +32,6 @@ import com.openhtmltopdf.java2d.Java2DOutputDevice;
 import com.openhtmltopdf.java2d.Java2DTextRenderer;
 import com.openhtmltopdf.java2d.api.FSPage;
 import com.openhtmltopdf.java2d.api.FSPageProcessor;
-import com.openhtmltopdf.jhtml.api.JhtmlRendererBuilderState;
 import com.openhtmltopdf.layout.BoxBuilder;
 import com.openhtmltopdf.layout.Layer;
 import com.openhtmltopdf.layout.LayoutContext;
@@ -61,7 +60,9 @@ import com.openhtmltopdf.util.LogMessageId;
 import com.openhtmltopdf.util.OpenUtil;
 import com.openhtmltopdf.util.ThreadCtx;
 import com.openhtmltopdf.util.XRLog;
-
+/**
+ * Java2DRenderer is a renderer that uses Java2D to render HTML to a graphics context. It is used by the JhtmlRendererBuilder class.
+ */
 public class JhtmlRenderer implements Closeable {
 
     private final List<FSDOMMutator> _domMutators;

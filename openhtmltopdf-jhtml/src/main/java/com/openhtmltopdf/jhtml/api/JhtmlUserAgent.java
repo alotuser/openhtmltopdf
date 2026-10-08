@@ -1,4 +1,4 @@
-package com.openhtmltopdf.jhtml;
+package com.openhtmltopdf.jhtml.api;
 
 import java.awt.image.BufferedImage;
 import java.io.FileNotFoundException;

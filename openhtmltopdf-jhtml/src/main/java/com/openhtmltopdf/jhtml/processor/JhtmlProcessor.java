@@ -1,6 +1,6 @@
 package com.openhtmltopdf.jhtml.processor;
 
-import com.openhtmltopdf.jhtml.JhtmlRenderer;
+import com.openhtmltopdf.jhtml.api.JhtmlRenderer;
 
 public interface JhtmlProcessor {
 

@@ -18,7 +18,8 @@ import org.apache.commons.io.IOUtils;
 
 import com.openhtmltopdf.extend.SVGDrawer;
 import com.openhtmltopdf.java2d.api.DefaultPageProcessor;
-import com.openhtmltopdf.jhtml.api.BufferedImagePageProcessor;
+import com.openhtmltopdf.jhtml.api.JhtmlPageProcessor;
+import com.openhtmltopdf.jhtml.api.JhtmlRenderer;
 import com.openhtmltopdf.jhtml.api.JhtmlRendererBuilder;
 import com.openhtmltopdf.jhtml.builder.AsLogBuilder;
 import com.openhtmltopdf.jhtml.config.BuilderConfig;
@@ -191,7 +192,7 @@ public class JhtmlKit {
 
 		builder.withHtmlContent(html, baseDocumentUri);
 
-		BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(imageType, scale);
+		JhtmlPageProcessor jhtmlPageProcessor = new JhtmlPageProcessor(imageType, scale);
 		if(pageHeight!=null&& pageWidth!=null) {
 			builder.useDefaultPageSize(getPageWidth(), getPageHeight(), units);
 		}
@@ -205,7 +206,7 @@ public class JhtmlKit {
 			baseBuilderConfig.configure(builder);
 		}
 
-		builder.toSinglePage(bufferedImagePageProcessor);
+		builder.toSinglePage(jhtmlPageProcessor);
 
 		jhtmlRenderer = builder.runFirstPage();
 		
@@ -215,7 +216,7 @@ public class JhtmlKit {
 		/*
 		 * Render Single Page Image
 		 */
-		return bufferedImagePageProcessor.getPageImages().get(0);
+		return jhtmlPageProcessor.getPageImages().get(0);
 
 	}
 
@@ -237,7 +238,7 @@ public class JhtmlKit {
 
 		builder.withHtmlContent(html, baseDocumentUri);
 
-		BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(imageType, scale);
+		JhtmlPageProcessor jhtmlPageProcessor = new JhtmlPageProcessor(imageType, scale);
 
 		builder.useDefaultPageSize(getPageWidth(), getPageHeight(), units);
 		//builder.useFastMode();
@@ -247,13 +248,13 @@ public class JhtmlKit {
 		for (BaseBuilderConfig baseBuilderConfig : config) {
 			baseBuilderConfig.configure(builder);
 		}
-		builder.toPageProcessor(bufferedImagePageProcessor);
+		builder.toPageProcessor(jhtmlPageProcessor);
 		jhtmlRenderer = builder.runPaged();
 
 		/*
 		 * Render Paged Image(s)
 		 */
-		return bufferedImagePageProcessor.getPageImages();
+		return jhtmlPageProcessor.getPageImages();
 
 	}
 
@@ -678,7 +679,7 @@ public class JhtmlKit {
 
 		builder.withHtmlContent(html, baseDocumentUri);
 
-		BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(BufferedImage.TYPE_INT_RGB, 2.0);
+		JhtmlPageProcessor jhtmlPageProcessor = new JhtmlPageProcessor(BufferedImage.TYPE_INT_RGB, 2.0);
 
 		builder.useDefaultPageSize(650, 700, JhtmlRendererBuilder.PageSizeUnits.MM);
 		builder.useEnvironmentFonts(true);
@@ -689,14 +690,14 @@ public class JhtmlKit {
 		String FONT_PATH = "D:\\myfonts";
 		builder.useFont(new File(FONT_PATH + "/zitijiaaizaoziyikong.ttf"), "bzff");
 
-		builder.toSinglePage(bufferedImagePageProcessor);
+		builder.toSinglePage(jhtmlPageProcessor);
 
 		builder.runFirstPage();
 
 		/*
 		 * Render Single Page Image
 		 */
-		return bufferedImagePageProcessor.getPageImages().get(0);
+		return jhtmlPageProcessor.getPageImages().get(0);
 
 		// ImageIO.write(image, "PNG", new File(filename));
 
@@ -715,9 +716,9 @@ public class JhtmlKit {
 		builder.useFastMode();
 		builder.testMode(true);
 
-		BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(BufferedImage.TYPE_INT_RGB, 1.0);
+		JhtmlPageProcessor jhtmlPageProcessor = new JhtmlPageProcessor(BufferedImage.TYPE_INT_RGB, 1.0);
 
-		builder.toPageProcessor(bufferedImagePageProcessor);
+		builder.toPageProcessor(jhtmlPageProcessor);
 
 		// BuilderConfig.J2D_WITH_FONT.configure(builder);
 
@@ -729,7 +730,7 @@ public class JhtmlKit {
 			return null;
 		}
 
-		return bufferedImagePageProcessor.getPageImages();
+		return jhtmlPageProcessor.getPageImages();
 	}
 
 	@Deprecated
@@ -743,7 +744,7 @@ public class JhtmlKit {
 
 			builder.withHtmlContent(html, baseDocumentUri);
 
-			BufferedImagePageProcessor bufferedImagePageProcessor = new BufferedImagePageProcessor(BufferedImage.TYPE_INT_ARGB, 2.0);
+			JhtmlPageProcessor jhtmlPageProcessor = new JhtmlPageProcessor(BufferedImage.TYPE_INT_ARGB, 2.0);
 
 			builder.useDefaultPageSize(150, 130, JhtmlRendererBuilder.PageSizeUnits.MM);
 
@@ -758,8 +759,8 @@ public class JhtmlKit {
 			/*
 			 * Render Single Page Image
 			 */
-			builder.toSinglePage(bufferedImagePageProcessor).runFirstPage();
-			BufferedImage image = bufferedImagePageProcessor.getPageImages().get(0);
+			builder.toSinglePage(jhtmlPageProcessor).runFirstPage();
+			BufferedImage image = jhtmlPageProcessor.getPageImages().get(0);
 
 			ImageIO.write(image, "PNG", new File(filename));
 

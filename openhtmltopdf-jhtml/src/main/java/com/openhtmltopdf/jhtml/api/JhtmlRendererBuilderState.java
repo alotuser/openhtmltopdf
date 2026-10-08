@@ -6,7 +6,7 @@ import com.openhtmltopdf.java2d.api.FSPageProcessor;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder;
 
 /**
- * This class is an internal implementation detail. 
+ * Java2DRendererBuilderState This class is an internal implementation detail. 
  */
 public class JhtmlRendererBuilderState extends BaseRendererBuilder.BaseRendererBuilderState {
 	 
