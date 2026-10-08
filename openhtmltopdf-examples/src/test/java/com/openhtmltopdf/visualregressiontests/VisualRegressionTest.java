@@ -747,6 +747,16 @@ public class VisualRegressionTest {
     public void testIssue417ReplacedSizingWidthHeightWithMax() throws IOException {
         assertTrue(vt.runTest("issue-417-replaced-sizing-width-height-with-max"));
     }
+
+    /**
+     * Tests that an explicit width/height below max-width/max-height is kept
+     * when the image's intrinsic size exceeds the max.
+     * https://github.com/openhtmltopdf/openhtmltopdf/issues/74
+     */
+    @Test
+    public void testIssue74ReplacedWidthBelowMax() throws IOException {
+        assertTrue(vt.runTest("issue-74-replaced-width-below-max"));
+    }
     
     /**
      * Tests that a fixed position element correctly resizes to the sum of its child boxes
@@ -847,6 +857,16 @@ public class VisualRegressionTest {
     @Test
     public void testReplacedSizingSvg() throws IOException {
         assertTrue(vt.runTest("replaced-sizing-svg", TestSupport.WITH_SVG));
+    }
+
+    /**
+     * Tests that SVG strokes under a non-uniform scale or a skew are scaled per
+     * direction, rather than by the horizontal factor alone.
+     * https://github.com/openhtmltopdf/openhtmltopdf/issues/126
+     */
+    @Test
+    public void testIssue126SvgNonUniformStroke() throws IOException {
+        assertTrue(vt.runTest("issue-126-svg-non-uniform-stroke", TestSupport.WITH_SVG));
     }
     
     /**
@@ -1082,6 +1102,16 @@ public class VisualRegressionTest {
     @Test
     public void testBorderRadius() throws IOException {
         assertTrue(vt.runTest("border-radius"));
+    }
+
+    /**
+     * Tests outer box-shadows: offsets, spread, border-radius, multiple shadows,
+     * alpha color, and a positioned box painted in its own layer. Inset shadows
+     * are not painted.
+     */
+    @Test
+    public void testBoxShadow() throws IOException {
+        assertTrue(vt.runTest("box-shadow"));
     }
 
     /**
@@ -1897,6 +1927,27 @@ public class VisualRegressionTest {
     @Test
     public void testBlockStraddlePushedFirstLine() throws IOException {
         assertTrue(vt.runTest("block-straddle-pushed-first-line", TestSupport.WITH_FONT));
+    }
+
+    /**
+     * Tests pagination of a list with floated li::before bullets after a heading with
+     * page-break-after: avoid: the heading only keeps with the list's first line, a
+     * bullet moves with its pushed paragraph, and widows: 2 splits a paragraph 2 + 2.
+     * https://github.com/openhtmltopdf/openhtmltopdf/issues/103
+     */
+    @Test
+    public void testIssue103ListFloatBulletPagination() throws IOException {
+        assertTrue(vt.runTest("issue-103-list-float-bullet-pagination", TestSupport.WITH_FONT));
+    }
+
+    /**
+     * A box at the top of a page keeps its top margin inside a table cell or an
+     * overflow: hidden box, as that margin does not adjoin the break before them.
+     * Only a margin that collapses through to the break is truncated.
+     */
+    @Test
+    public void testTopMarginInsideBfcAtPageTop() throws IOException {
+        assertTrue(vt.runTest("top-margin-inside-bfc-at-page-top", TestSupport.WITH_FONT));
     }
 
     @Test

@@ -33,6 +33,7 @@ import org.w3c.dom.Node;
 import com.openhtmltopdf.css.constants.CSSName;
 import com.openhtmltopdf.css.constants.IdentValue;
 import com.openhtmltopdf.extend.StructureType;
+import com.openhtmltopdf.newtable.TableBox;
 import com.openhtmltopdf.newtable.TableCellBox;
 import com.openhtmltopdf.render.BlockBox;
 import com.openhtmltopdf.render.Box;
@@ -40,7 +41,10 @@ import com.openhtmltopdf.render.InlineLayoutBox;
 import com.openhtmltopdf.render.LineBox;
 import com.openhtmltopdf.render.MarkerData;
 import com.openhtmltopdf.render.RenderingContext;
+import com.openhtmltopdf.render.displaylist.DisplayListContainer;
+import com.openhtmltopdf.render.displaylist.PaintInlineContent;
 import com.openhtmltopdf.util.XRLog;
+import java.util.IdentityHashMap;
 
 public class PdfBoxAccessibilityHelper {
     // This maps from page to a list of content items, we need to process in page order, so a linked map.
@@ -65,6 +69,9 @@ public class PdfBoxAccessibilityHelper {
 
     private int _runningLevel;
 
+    // see #isTableLayoutArtifact
+    private IdentityHashMap<Box, List<Integer>> _boxToPageMapping;
+
     /**
      * When non-null, we are inside a running element that contains a link.
      * Text content that is a DOM descendant of this link will get proper
@@ -86,6 +93,10 @@ public class PdfBoxAccessibilityHelper {
         suppliers.put("ul", ListStructualElement::new);
         suppliers.put("ol", ListStructualElement::new);
         suppliers.put("li", ListItemStructualElement::new);
+
+        suppliers.put("dl", DescriptionListStructualElement::new);
+        suppliers.put("dt", DescriptionTermStructualElement::new);
+        suppliers.put("dd", DescriptionDetailsStructualElement::new);
 
         suppliers.put("table", TableStructualElement::new);
         suppliers.put("tr", TableRowStructualElement::new);
@@ -248,32 +259,15 @@ public class PdfBoxAccessibilityHelper {
                         return StandardStructureTypes.DIV;
                     case "dt": // Fall-thru
                     case "dd":
-                        // dd takes HTML flow content, so it can directly contain
-                        // block-level children (<dd><p>, <dd><ul>, <dd><table>, ...).
-                        // For that case Div is correct and already legal - Div is a
-                        // Grouping element and BLSEs like P/L/Table nest inside a
-                        // Grouping element just fine (Div>P, Div>L, Div>Table).
+                        // A dt/dd inside a dl never gets here: DescriptionListStructualElement
+                        // regroups its content into the Lbl/LBody of a synthetic LI. This only
+                        // applies to a dt/dd outside a dl.
                         //
-                        // It's only when dt/dd directly wraps inline/text content
-                        // that Div becomes a problem: falling through to Div (a
-                        // Grouping element that must not directly contain marked
-                        // content) forces the single-child collapse in finish() to
-                        // either violate that rule (raw content directly in the Div,
-                        // PAC: "Marked content is present in a possibly inadmissible
-                        // location") or wrap the content in a Span purely to satisfy
-                        // nesting, which PAC then flags right back as "possibly
-                        // inappropriate use of a Span structure element" since the
-                        // Span itself distinguishes nothing. So only map to P (a
-                        // content-permitting block-level element) in that inline
-                        // case; for block content, keep falling through to Div.
-                        //
-                        // There's no dedicated standard structure type for
-                        // definition-list terms/descriptions in PDF 1.7; PDF 2.0
-                        // supports L/LI/Lbl/LBody with ListNumbering=Description
-                        // for this (see PDF Association's "Deriving HTML from
-                        // PDF" spec, 4.3.5.5.2), which would be a more faithful
-                        // mapping but requires pairing sibling dt/dd elements
-                        // into synthetic LI groups - a larger, separate change.
+                        // dd takes flow content, so block children (<dd><p>, <dd><ul>, ...)
+                        // nest legally in a Div. Inline content must not sit directly in a
+                        // Div (a Grouping element), and wrapping it in a Span only to satisfy
+                        // nesting is flagged by PAC as inappropriate use of Span. So map to P
+                        // (content-permitting) in the inline case; otherwise fall through to Div.
                         if (box instanceof BlockBox &&
                             ((BlockBox) box).getChildrenContentType() == BlockBox.ContentType.INLINE) {
                             return StandardStructureTypes.P;
@@ -555,6 +549,163 @@ public class PdfBoxAccessibilityHelper {
             handleGlobalAttributes();
 
             finishTreeItems(child.children, child);
+        }
+    }
+
+    /**
+     * A dt or dd. Inside a dl, DescriptionListStructualElement moves its children
+     * into the Lbl/LBody of a synthetic LI and the element itself is never finished.
+     * A dt/dd outside a dl is finished like any other element (see chooseTag).
+     */
+    private abstract static class DescriptionPartStructualElement extends GenericStructualElement {
+        void moveChildrenTo(AbstractStructualElement target) {
+            for (AbstractTreeItem child : this.children) {
+                target.addChild(child);
+                child.parent = target;
+            }
+            this.children.clear();
+        }
+
+        abstract boolean isTerm();
+    }
+
+    private static class DescriptionTermStructualElement extends DescriptionPartStructualElement {
+        @Override
+        boolean isTerm() {
+            return true;
+        }
+    }
+
+    private static class DescriptionDetailsStructualElement extends DescriptionPartStructualElement {
+        @Override
+        boolean isTerm() {
+            return false;
+        }
+    }
+
+    private static class DescriptionListItemStructualElement extends AbstractStructualElement {
+        final ListLabelStructualElement label = new ListLabelStructualElement();
+        final ListBodyStructualElement body = new ListBodyStructualElement();
+
+        DescriptionListItemStructualElement(AbstractStructualElement first) {
+            this.page = first.page;
+            this.box = first.box;
+            label.parent = this;
+            body.parent = this;
+        }
+
+        @Override
+        String getPdfTag() {
+            return StandardStructureTypes.LI;
+        }
+
+        void addTerm(DescriptionTermStructualElement term) {
+            term.moveChildrenTo(label);
+        }
+
+        void addDetails(DescriptionDetailsStructualElement details) {
+            details.moveChildrenTo(body);
+        }
+
+        @Override
+        void addChild(AbstractTreeItem child) {
+            body.addChild(child);
+            child.parent = body;
+        }
+
+        @Override
+        void finish(AbstractStructualElement parent) {
+            DescriptionListItemStructualElement child = this;
+            createPdfStrucureElement(parent, child);
+            handleGlobalAttributes();
+            finishTreeItem(child.label, child);
+            finishTreeItem(child.body, child);
+        }
+    }
+
+    /**
+     * Maps a dl to an L. HTML has no element for a term/description group, so each
+     * run of dt elements followed by dd elements becomes a synthetic LI, with the dt
+     * content in its Lbl and the dd content in its LBody (PDF 2.0, "Deriving HTML
+     * from PDF" 4.3.5.5.2). div wrappers around groups are flattened.
+     */
+    private static class DescriptionListStructualElement extends AbstractStructualElement {
+        final List<AbstractTreeItem> children = new ArrayList<>();
+
+        @Override
+        String getPdfTag() {
+            return StandardStructureTypes.L;
+        }
+
+        @Override
+        void addChild(AbstractTreeItem child) {
+            children.add(child);
+        }
+
+        @Override
+        void finish(AbstractStructualElement parent) {
+            DescriptionListStructualElement child = this;
+            createPdfStrucureElement(parent, child);
+            handleGlobalAttributes();
+            finishTreeItems(groupDescriptionParts(child.children), child);
+        }
+
+        private List<DescriptionListItemStructualElement> groupDescriptionParts(List<AbstractTreeItem> sourceChildren) {
+            List<AbstractTreeItem> parts = new ArrayList<>();
+            for (AbstractTreeItem child : sourceChildren) {
+                collectDescriptionParts(child, parts);
+            }
+
+            List<DescriptionListItemStructualElement> result = new ArrayList<>();
+            DescriptionListItemStructualElement currentItem = null;
+            boolean seenDetails = false;
+
+            for (AbstractTreeItem part : parts) {
+                boolean isTerm = part instanceof DescriptionPartStructualElement &&
+                        ((DescriptionPartStructualElement) part).isTerm();
+
+                if (currentItem == null || (isTerm && seenDetails)) {
+                    currentItem = new DescriptionListItemStructualElement(
+                            part instanceof AbstractStructualElement ? (AbstractStructualElement) part : this);
+                    result.add(currentItem);
+                    seenDetails = false;
+                }
+
+                if (isTerm) {
+                    currentItem.addTerm((DescriptionTermStructualElement) part);
+                } else if (part instanceof DescriptionDetailsStructualElement) {
+                    currentItem.addDetails((DescriptionDetailsStructualElement) part);
+                    seenDetails = true;
+                } else {
+                    // Not allowed in a dl, but its content must still be tagged
+                    // for PDF/UA, so keep it with the current description.
+                    XRLog.log(Level.WARNING, LogMessageId.LogMessageId0Param.GENERAL_PDF_ACCESSIBILITY_UNEXPECTED_DESCRIPTION_LIST_CHILD);
+                    currentItem.addChild(part);
+                    seenDetails = true;
+                }
+            }
+            return result;
+        }
+
+        private void collectDescriptionParts(AbstractTreeItem child, List<AbstractTreeItem> result) {
+            if (isDescriptionDivWrapper(child)) {
+                for (AbstractTreeItem nestedChild : ((GenericStructualElement) child).children) {
+                    collectDescriptionParts(nestedChild, result);
+                }
+            } else {
+                result.add(child);
+            }
+        }
+
+        private boolean isDescriptionDivWrapper(AbstractTreeItem child) {
+            if (!(child instanceof GenericStructualElement) ||
+                child instanceof DescriptionPartStructualElement) {
+                return false;
+            }
+            Box box = ((GenericStructualElement) child).box;
+            return box != null &&
+                   box.getElement() != null &&
+                   "div".equals(box.getElement().getTagName());
         }
     }
 
@@ -1024,6 +1175,14 @@ public class PdfBoxAccessibilityHelper {
             sortByDomOrder(list.listItems);
             for (ListItemStructualElement item : list.listItems) {
                 sortChildrenByDomOrder(item);
+            }
+        } else if (element instanceof DescriptionListStructualElement) {
+            DescriptionListStructualElement list = (DescriptionListStructualElement) element;
+            sortByDomOrder(list.children);
+            for (AbstractTreeItem child : list.children) {
+                if (child instanceof AbstractStructualElement) {
+                    sortChildrenByDomOrder((AbstractStructualElement) child);
+                }
             }
         } else if (element instanceof ListItemStructualElement) {
             ListItemStructualElement item = (ListItemStructualElement) element;
@@ -1530,12 +1689,25 @@ public class PdfBoxAccessibilityHelper {
                     COSDictionary artifact = createLineBreakArtifact();
                     _cs.beginMarkedContent(COSName.ARTIFACT, artifact);
                     return TRUE_TOKEN;
+                } else if (isTableLayoutArtifact(box)) {
+                    COSDictionary artifact = createPaginationArtifact();
+                    _cs.beginMarkedContent(COSName.ARTIFACT, artifact);
+                    return TRUE_TOKEN;
                 }
                 GenericContentItem current = createMarkedContentStructureItem(type, box);
                 _cs.beginMarkedContent(COSName.getPDFName(StandardStructureTypes.SPAN), current.dict);
                 return TRUE_TOKEN;
             }
             case REPLACED: {
+                // For tables pagination might be active and for footer images
+                // the last image should be considered as the "real" image, not
+                // the previous repeated entries.
+                if (isTableLayoutArtifact(box)) {
+                    COSDictionary artifact = createPaginationArtifact();
+                    _cs.beginMarkedContent(COSName.ARTIFACT, artifact);
+                    return TRUE_TOKEN;
+                }
+
                 AbstractStructualElement struct = (AbstractStructualElement) box.getAccessibilityObject();
                 if (struct == null) {
                     struct = createStructureItem(type, box);
@@ -1638,4 +1810,90 @@ public class PdfBoxAccessibilityHelper {
             _pageItems._pageAnnotations.add(annotStructParentPair);
         }
     }
+
+    public void setDisplayListContainer(DisplayListContainer displayListContainer) {
+        // see #isTableLayoutArtifact
+        IdentityHashMap<Box, List<Integer>> boxToPageMappingBuilder = new IdentityHashMap<>();
+        for(int i = displayListContainer.getMinPage(); i <= displayListContainer.getMaxPage(); i++) {
+            final int currentIdx = i;
+            displayListContainer
+                    .getPageInstructions(i)
+                    .getOperations()
+                    .stream()
+                    .filter(dlo -> dlo instanceof PaintInlineContent)
+                    .map(dlo -> (PaintInlineContent) dlo)
+                    .flatMap(pic -> pic.getInlines().stream())
+                    .filter(dli -> dli instanceof Box)
+                    .map(dli -> (Box) dli)
+                    .forEach(b -> boxToPageMappingBuilder.computeIfAbsent(b, b2 -> new ArrayList<>()).add(currentIdx));
+        }
+        _boxToPageMapping = boxToPageMappingBuilder;
+    }
+
+    private boolean isInTableHeader(Box currentBox) {
+        return isInTableHeaderOrFooter(currentBox, "thead");
+    }
+
+    private boolean isInTableFooter(Box currentBox) {
+        return isInTableHeaderOrFooter(currentBox, "tfoot");
+    }
+
+    private boolean isInTableHeaderOrFooter(Box currentBox, String targetElement) {
+        if (currentBox == null) {
+            return false;
+        } else if (currentBox.getElement() != null
+                && targetElement.equals(currentBox.getElement().getTagName())) {
+            return true;
+        } else {
+            return isInTableHeaderOrFooter(currentBox.getParent(), targetElement);
+        }
+    }
+
+    private boolean isInPaginatedTable(Box box) {
+        if(box == null) {
+            return false;
+        } else if(box instanceof TableBox) {
+            return box.getStyle().isPaginateTable();
+        } else {
+            return isInPaginatedTable(box.getParent());
+        }
+    }
+
+    private boolean isTableLayoutArtifact(Box box) {
+        // If a table is styled with the CSS property "-fs-table-paginate" set to
+        // "paginate", this causes the table headers and footers to be repeated on
+        // each page the table covers.
+        //
+        // For the page structure tree the entries must only be represented once.
+        // If each copy is included in the structure tree, the headers and footers
+        // are represented multiple times. This is especially a problem for table
+        // header as the headers are read for each cell.
+        //
+        // The contents that is only generated as part of the paging must be marked
+        // as a paging artifact, so that it is not represented in the page structure
+        //
+        // When creating the page structure items we need to check if this box
+        // is part of a paginated header or footer and if this the first or last
+        // page where this content is drawn.
+        List<Integer> pageUsages = _boxToPageMapping.get(box);
+        if (pageUsages == null) {
+            return false;
+        }
+        if (!isInPaginatedTable(box)) {
+            return false;
+        }
+        boolean isInTableHeader = isInTableHeader(box);
+        boolean isInTableFooter = isInTableFooter(box);
+        if(! (isInTableFooter || isInTableHeader)) {
+            return false;
+        }
+        if(isInTableHeader) {
+            // Header content is only drawn on the first usage page
+            return pageUsages.get(0) != _ctx.getPageNo();
+        } else { // isFooter
+            // Footer content is only drawn on the last usage page
+            return pageUsages.get(pageUsages.size() - 1) != _ctx.getPageNo();
+        }
+    }
+
 }

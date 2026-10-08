@@ -883,11 +883,14 @@ public class BlockBox extends Box {
         int minWidth = getCSSMinWidth(c);
         int minHeight = getCSSMinHeight(c);
         
-        // Clamp w to max-width if required.
-        if (!getStyle().isMaxWidthNone() &&
-            (intrinsicWidth > getCSSMaxWidth(c) || cssWidth > getCSSMaxWidth(c))) {
-            cssWidth = getCSSMaxWidth(c);
-            usedMaxWidth = true;
+        // Clamp w to max-width if required. An explicit width below max-width
+        // is left alone, even when the intrinsic width exceeds max-width.
+        if (!getStyle().isMaxWidthNone()) {
+            int maxWidth = getCSSMaxWidth(c);
+            if (cssWidth > maxWidth || (cssWidth < 0 && intrinsicWidth > maxWidth)) {
+                cssWidth = maxWidth;
+                usedMaxWidth = true;
+            }
         }
 
         // Clamp w to min-width if required.
@@ -899,10 +902,12 @@ public class BlockBox extends Box {
         }
         
         // Clamp h to max-height if required.
-        if (!getStyle().isMaxHeightNone() &&
-            (intrinsicHeight > getCSSMaxHeight(c) || cssHeight > getCSSMaxHeight(c))) {
-            cssHeight = getCSSMaxHeight(c);
-            usedMaxHeight = true;
+        if (!getStyle().isMaxHeightNone()) {
+            int maxHeight = getCSSMaxHeight(c);
+            if (cssHeight > maxHeight || (cssHeight < 0 && intrinsicHeight > maxHeight)) {
+                cssHeight = maxHeight;
+                usedMaxHeight = true;
+            }
         }
 
         // Clamp h to min-height if required.
@@ -1392,12 +1397,39 @@ public class BlockBox extends Box {
      * flush with the top of its page. Margins adjoining a forced break are preserved,
      * and so is a negative one, which pulls the box back onto the previous page.
      * Nothing is truncated on the first page, where no break precedes the box.
+     * <br><br>
+     * Only a margin that adjoins the break is truncated. A margin inside a box that
+     * does not collapse margins with its children, such as a table cell or a box with
+     * <code>overflow: hidden</code>, does not adjoin a break before that box.
      */
     private boolean isTopMarginTruncatedAtBreak(LayoutContext c, PageBox page) {
         return page.getPageNo() > 0 &&
                getStyleMargin(c).top() > 0 &&
                !getStyle().isForcePageBreakBefore() &&
-               !c.getRootLayer().isPageStartedByForcedBreak(page.getTop());
+               !c.getRootLayer().isPageStartedByForcedBreak(page.getTop()) &&
+               isTopMarginAdjoiningBreak(page);
+    }
+
+    /**
+     * Whether the top margin of this box, which starts at the top of <code>page</code>,
+     * adjoins the break before that page. Walking up, the break lies inside the first
+     * ancestor that starts on an earlier page, and the margin adjoins it unless an
+     * ancestor starting on this page keeps its children's margins to itself.
+     */
+    private boolean isTopMarginAdjoiningBreak(PageBox page) {
+        for (Box parent = getParent(); parent instanceof BlockBox; parent = parent.getParent()) {
+            if (parent.getAbsY() < page.getTop()) {
+                return true;
+            }
+
+            BlockBox block = (BlockBox) parent;
+            if (!block.isMayCollapseMarginsWithChildren() ||
+                block.getStyle().establishesBFC()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     protected void layoutInlineChildren(
@@ -1514,14 +1546,16 @@ public class BlockBox extends Box {
                 if (lastPageLineCount < widows) {
                     // We don't have enough lines on last page.
 
-                    if (cCount - 1 - widows < orphans) {
+                    if (cCount - widows < orphans) {
                         // If adding a page break to satisfy widows property would
                         // break orphans constraint insert a page break at start.
                         setNeedPageClear(true);
                     } else if (tryAgain) {
                         // Else, if we are allowed, lay out our line boxes with
                         // a page break inserted after breakAtLine.
-                        int breakAtLine = cCount - 1 - widows;
+                        // Index of the first line moved to the next page, so the last
+                        // page gets exactly `widows` lines and this page the rest.
+                        int breakAtLine = cCount - widows;
 
                         resetChildren(c);
                         removeAllChildren();
