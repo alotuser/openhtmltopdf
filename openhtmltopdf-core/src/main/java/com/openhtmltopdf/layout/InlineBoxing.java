@@ -20,6 +20,7 @@
  */
 package com.openhtmltopdf.layout;
 
+import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +40,7 @@ import com.openhtmltopdf.css.style.CssContext;
 import com.openhtmltopdf.css.style.FSDerivedValue;
 import com.openhtmltopdf.css.style.derived.BorderPropertySet;
 import com.openhtmltopdf.css.style.derived.RectPropertySet;
+import com.openhtmltopdf.extend.FSTextBreaker;
 import com.openhtmltopdf.extend.Hyphenator;
 import com.openhtmltopdf.layout.Breaker.BreakTextResult;
 import com.openhtmltopdf.render.AnonymousBlockBox;
@@ -144,7 +146,10 @@ public class InlineBoxing {
 
         int lineOffset = 0;
 
-        for (Styleable node : box.getInlineContent()) {
+        List<Styleable> inlineContent = box.getInlineContent();
+
+        for (int nodeIndex = 0; nodeIndex < inlineContent.size(); nodeIndex++) {
+            Styleable node = inlineContent.get(nodeIndex);
 
             if (node.getStyle().isInline()) {
                 InlineBox inlineBox = (InlineBox)node;
@@ -180,6 +185,9 @@ public class InlineBoxing {
                     lbContext.setAtomic(!inlineBox.getContentFunction().isCalculableAtLayout());
                 } else {
                     lbContext.setMaster(inlineBox.getText());
+                    lbContext.setFollowingGlueWidth(
+                            getFollowingGlueWidth(c, inlineBox.getText(), inlineContent, nodeIndex + 1,
+                                    hyphenator, space.maxAvailableWidth));
                 }
 
                 boolean inCharBreakingMode = false;
@@ -399,6 +407,125 @@ public class InlineBoxing {
         LINE_FINISHED
     }
     
+    /**
+     * Returns the width of the content at the start of the inline boxes following {@code text}
+     * (from {@code from} on) that has no line break opportunity between it and the end of
+     * {@code text}, such as the link text after an opening parenthesis or the closing
+     * parenthesis after a link. This includes the margin, border and padding of elements
+     * that start (and end) within that content. Returns 0 if a line may break right
+     * after {@code text}.
+     */
+    private static int getFollowingGlueWidth(
+            LayoutContext c, String text, List<Styleable> inlineContent, int from,
+            Hyphenator hyphenator, int cbWidth) {
+
+        if (text.isEmpty() || Character.isWhitespace(text.charAt(text.length() - 1))) {
+            return 0;
+        }
+
+        // The last word of the text is enough context to decide on a break after it.
+        int tailStart = text.length();
+        while (tailStart > 0 && !Character.isWhitespace(text.charAt(tailStart - 1))) {
+            tailStart--;
+        }
+        String tail = text.substring(tailStart);
+
+        // Collect the following text up to the first whitespace, which always
+        // allows a break. Stop at anything that is not plain wrapping text.
+        // Boxes without text are kept for the margin, border and padding of
+        // the elements they start or end.
+        List<InlineBox> boxes = new ArrayList<>();
+        List<String> texts = new ArrayList<>();
+        StringBuilder following = new StringBuilder();
+
+        for (int i = from; i < inlineContent.size(); i++) {
+            Styleable node = inlineContent.get(i);
+            if (!(node instanceof InlineBox)) {
+                break;
+            }
+
+            InlineBox next = (InlineBox) node;
+            CalculatedStyle style = next.getStyle();
+            IdentValue whitespace = style.getWhitespace();
+            if (next.isDynamicFunction() ||
+                whitespace == IdentValue.NOWRAP ||
+                whitespace == IdentValue.PRE) {
+                break;
+            }
+
+            String nextText = next.getText() == null ? "" : next.getText();
+            if (hyphenator != null && IdentValue.AUTO.equals(style.getIdent(CSSName.HYPHENS))) {
+                // The layout loop hyphenates this box only once it gets there.
+                nextText = hyphenator.hyphenateText(nextText);
+            }
+
+            boxes.add(next);
+            texts.add(nextText);
+            following.append(nextText);
+
+            if (nextText.chars().anyMatch(Character::isWhitespace)) {
+                break;
+            }
+        }
+
+        if (following.length() == 0) {
+            return 0;
+        }
+
+        FSTextBreaker breaker = Breaker.getLineBreakStream(tail + following, c.getSharedContext());
+        int glueEnd = following.length();
+        for (int pos = breaker.next(); pos != BreakIterator.DONE; pos = breaker.next()) {
+            if (pos == tail.length()) {
+                return 0;
+            } else if (pos > tail.length()) {
+                glueEnd = pos - tail.length();
+                break;
+            }
+        }
+
+        // Trailing whitespace hangs at the end of a line, so it does not need to fit.
+        while (glueEnd > 0 && Character.isWhitespace(following.charAt(glueEnd - 1))) {
+            glueEnd--;
+        }
+
+        int width = 0;
+        int offset = 0;
+        List<Element> started = new ArrayList<>();
+        for (int i = 0; i < boxes.size() && offset <= glueEnd; i++) {
+            InlineBox next = boxes.get(i);
+            String nextText = texts.get(i);
+            CalculatedStyle style = next.getStyle();
+
+            if (next.isStartsHere()) {
+                if (offset == glueEnd) {
+                    // This element starts after the glued content.
+                    break;
+                }
+                width += style.getMarginBorderPadding(c, cbWidth, CalculatedStyle.LEFT);
+                started.add(next.getElement());
+            }
+
+            int end = Math.min(nextText.length(), glueEnd - offset);
+            if (end > 0) {
+                width += Breaker.getTextWidthWithSpacing(
+                        c, style.getFSFont(c), nextText.substring(0, end), TextSpacing.from(style, c));
+                if (end == glueEnd - offset && nextText.charAt(end - 1) == Breaker.SOFT_HYPHEN) {
+                    // A break at a soft hyphen shows a hyphen.
+                    width += Breaker.getTextWidthWithSpacing(c, style.getFSFont(c), "-", TextSpacing.from(style, c));
+                }
+            }
+            offset += nextText.length();
+
+            // The right side of an element that was open before is already reserved
+            // by the layout, see SpaceVariables.pendingRightMBP.
+            if (next.isEndsHere() && offset <= glueEnd && started.contains(next.getElement())) {
+                width += style.getMarginBorderPadding(c, cbWidth, CalculatedStyle.RIGHT);
+            }
+        }
+
+        return width;
+    }
+
     /**
      * Trys to consume the text in lbContext. If successful it creates an InlineText and adds it to the current inline
      * layout box.
