@@ -189,6 +189,14 @@ public class SimpleDitherStrategy implements BaseDither {
 	 * <td>{@code dither-kernel="JARVIS_JUDICE_NINKE"}</td>
 	 * </tr>
 	 * <tr>
+	 * 	<td>{@code SHIAU_FAN}</td>
+	 *	<td>Error‑diffusion</td>
+	 *	<td>Symmetric error distribution, greatly suppress worm/serpentine artifacts</td>
+	 *	<td>Moderate compute overhead</td>
+	 *	<td>Gradual product photos where Floyd-Steinberg worm pattern is obvious</td>
+	 *	<td>{@code dither‑kernel="SHIAU_FAN"}</td>
+	 * </tr>
+	 * <tr>
 	 * <td>{@code BAYER_8X8}</td>
 	 * <td>Ordered dither</td>
 	 * <td>Fastest execution speed, deterministic output</td>
@@ -262,6 +270,13 @@ public class SimpleDitherStrategy implements BaseDither {
 		 */
 		JARVIS_JUDICE_NINKE(new int[][] { { 1, 0, 7 }, { 2, 0, 5 }, { -2, 1, 3 }, { -1, 1, 5 }, { 0, 1, 7 }, { 1, 1, 5 }, { 2, 1, 3 }, { -2, 2, 1 }, { -1, 2, 3 }, { 0, 2, 5 }, { 1, 2, 3 }, { 2, 2, 1 } }, 48),
 
+		/**
+		 * Shiau-Fan error-diffusion(1996), optimized to reduce worm/serpentine artifacts.
+		 * All weights are power-of-two, friendly to bit-shift calculation.
+		 * Reference: Jeng-Nan Shiau, Zhigang Fan, SPIE 2658.
+		 */
+		SHIAU_FAN(new int[][] { { 1, 0, 4 }, { -2, 1, 1 }, { -1, 1, 2 }, { 0, 1, 3 }, { 1, 1, 2 }, { 2, 1, 1 }, { -1, 2, 1 }, { 0, 2, 2 }, { 1, 2, 1 } }, 16),
+		
 		/**
 		 * Bayer 8×8 ordered dither, no error diffusion; fastest speed for icons/simple graphics; gradients produce visible grid patterns.
 		 * Reference: US Patent US3531793 (1969).

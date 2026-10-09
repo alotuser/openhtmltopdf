@@ -10,9 +10,6 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 
 import com.openhtmltopdf.jhtml.processor.JhtmlJsoupProcessor;
-import com.openhtmltopdf.jhtml.swing.dither.strategy.SimpleDitherStrategy;
-import com.openhtmltopdf.jhtml.swing.dither.strategy.SimpleDitherStrategy.ColorMode;
-import com.openhtmltopdf.jhtml.swing.dither.strategy.SimpleDitherStrategy.DitherKernel;
 import com.openhtmltopdf.jhtml.util.ImageCropUtil;
 
 import cn.alotus.core.io.resource.ResourceUtil;

@@ -1,0 +1,491 @@
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8" />
+	<title>大白菜 电子价签</title>
+	<style>
+		@page {
+			size: 800px 480px;
+			margin: 0;
+			padding: 0;
+		}
+
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			background-image: linear-gradient(180deg, #e8f5e9 0%, #dcedc8 100%);
+			font-family: "TestFont", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+		}
+
+		.tag {
+			position: relative;
+			width: 800px;
+			height: 480px;
+			margin: 0 auto;
+			overflow: hidden;
+			border: 3px solid #b9e4c0;
+			border-radius: 24px;
+			background-image: linear-gradient(155deg, #fdfefb 0%, #f0faf1 45%, #dcf3e0 100%);
+		}
+
+		.hd {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 116px;
+			background-image: linear-gradient(100deg, #14532d 0%, #1b5e20 35%, #2e7d32 72%, #43a047 100%);
+			color: #ffffff;
+			
+			
+		}
+
+		.cat {
+			position: absolute;
+			top: 14px;
+			left: 30px;
+			display: inline-block;
+			border: 1px solid rgba(255, 255, 255, 0.55);
+			border-radius: 9px;
+			background-color: rgba(255, 255, 255, 0.18);
+			font-size: 14px;
+			
+			letter-spacing: 3px;
+			
+			width: 200px;
+			text-align: center;
+			
+		}
+
+		h1 {
+			position: absolute;
+			top: 40px;
+			left: 28px;
+			margin: 0;
+			font-size: 52px;
+			font-weight: bold;
+			
+			letter-spacing: 10px;
+			width: 100%;
+		}
+
+		.en {
+			position: absolute;
+			top: 96px;
+			left: 34px;
+			font-size: 12px;
+			color: #c8e6c9;
+			text-transform: uppercase;
+			
+			letter-spacing: 4px;
+			width: 100%;
+			
+		}
+
+		.badge {
+			position: absolute;
+			top: 8px;
+			right: 24px;
+			width: 110px;
+			height: 110px;
+			box-sizing: border-box;
+			border: 3px solid #ffffff;
+			border-radius: 50%;
+			background-image: linear-gradient(140deg, #ff7043 0%, #f4511e 45%, #d84315 100%);
+			transform: rotate(8deg);
+			text-align: center;
+			z-index: 5;
+		}
+
+		.badge .ring {
+			position: absolute;
+			top: 6px;
+			left: 6px;
+			right: 6px;
+			bottom: 6px;
+			border: 2px dashed rgba(255, 255, 255, 0.8);
+			border-radius: 50%;
+		}
+
+		.badge .t1 {
+			position: absolute;
+			top: 26px;
+			left: 0;
+			width: 100%;
+			font-size: 30px;
+			font-weight: bold;
+			letter-spacing: 2px;
+			color: #ffffff;
+		}
+
+		.badge .t2 {
+			position: absolute;
+			top: 62px;
+			left: 0;
+			width: 100%;
+			font-size: 11px;
+			letter-spacing: 3px;
+			color: #ffe0b2;
+		}
+
+		.badge .d1,
+		.badge .d2 {
+			position: absolute;
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background-color: #ffe082;
+		}
+
+		.badge .d1 {
+			top: 10px;
+			left: 14px;
+		}
+
+		.badge .d2 {
+			bottom: 12px;
+			right: 16px;
+		}
+
+		.bd {
+			position: absolute;
+			top: 116px;
+			left: 0;
+			width: 100%;
+			height: 288px;
+		}
+
+		.veggie {
+			position: absolute;
+			top: 18px;
+			left: 30px;
+			width: 252px;
+			height: 252px;
+			border: 5px solid #ffffff;
+			border-radius: 50%;
+			background-image: linear-gradient(160deg, #f1fbf3 0%, #cdeeda 60%, #b2e3bd 100%);
+			overflow: hidden;
+		}
+
+		.veggie svg {
+			position: absolute;
+			top: 6px;
+			left: 6px;
+		}
+
+		.info {
+			position: absolute;
+			top: 0;
+			left: 350px;
+			right: 28px;
+			height: 288px;
+		}
+
+		.sale {
+			position: absolute;
+			top: 4px;
+			left: 0;
+			display: inline-block;
+			padding: 5px 14px;
+			border-radius: 8px;
+			background-image: linear-gradient(135deg, #ff7043, #f4511e);
+			color: #ffffff;
+			font-size: 15px;
+			font-weight: bold;
+			letter-spacing: 2px;
+			transform: rotate(-2deg);
+			width: 70px;
+		}
+
+		.old {
+			position: absolute;
+			top: 40px;
+			left: 0;
+			font-size: 22px;
+			color: #90a4ae;
+			white-space: nowrap;
+		}
+
+		.old .strike {
+			margin-left: 8px;
+			font-weight: bold;
+			color: #9e9e9e;
+			text-decoration: line-through;
+			text-decoration-color: #e53935;
+		}
+
+		.new {
+			position: absolute;
+			top: 72px;
+			left: -2px;
+			white-space: nowrap;
+		}
+
+		.new .big {
+			font-size: 104px;
+			font-weight: bold;
+			color: #d84315;
+		}
+
+		.new .unit {
+			margin-left: 10px;
+			font-size: 42px;
+			font-weight: bold;
+			color: #e53935;
+		}
+
+		.save {
+			position: absolute;
+			top: 202px;
+			left: 0;
+			white-space: nowrap;
+		}
+
+		.off {
+			display: inline-block;
+			padding: 3px 14px;
+			border: 2px solid #ff7043;
+			border-radius: 9px;
+			background-color: rgba(255, 112, 67, 0.08);
+			color: #e64a19;
+			font-size: 19px;
+			font-weight: bold;
+		}
+
+		.save-txt {
+			display: inline-block;
+			margin-left: 12px;
+			padding: 5px 16px;
+			border-radius: 9px;
+			background-image: linear-gradient(135deg, #ffca28, #ffa726);
+			color: #5d4037;
+			font-size: 19px;
+			font-weight: bold;
+		}
+
+		.origin {
+			position: absolute;
+			top: 242px;
+			left: 0;
+			display: inline-block;
+			padding: 6px 18px;
+			border: 1px solid #81c784;
+			border-radius: 9px;
+			background-color: rgba(67, 160, 71, 0.10);
+			color: #2e7d32;
+			font-size: 20px;
+			font-weight: bold;
+			letter-spacing: 1px;
+			white-space: nowrap;
+		}
+
+		.origin .dot {
+			display: inline-block;
+			width: 12px;
+			height: 12px;
+			margin-right: 8px;
+			border-radius: 50%;
+			background-color: #43a047;
+		}
+
+		.bub1,
+		.bub2,
+		.bub3 {
+			position: absolute;
+			border-radius: 50%;
+			background-color: rgba(255, 255, 255, 0.55);
+		}
+
+		.bub1 {
+			left: 520px;
+			top: 132px;
+			width: 10px;
+			height: 10px;
+		}
+
+		.bub2 {
+			left: 544px;
+			top: 122px;
+			width: 6px;
+			height: 6px;
+		}
+
+		.bub3 {
+			right: 168px;
+			bottom: 88px;
+			width: 12px;
+			height: 12px;
+		}
+
+		.ft {
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			height: 76px;
+			border-top: 2px dashed #a5d6a7;
+			background-image: linear-gradient(90deg, #eaf7ec 0%, #dcedc8 100%);
+		}
+
+		.ft .line1 {
+			position: absolute;
+			top: 18px;
+			left: 30px;
+			width: 200px;
+			font-size: 16px;
+			font-weight: bold;
+			letter-spacing: 2px;
+			color: #558b2f;
+		}
+
+		.ft .line2 {
+			position: absolute;
+			top: 46px;
+			left: 30px;
+			font-size: 12px;
+			width: 200px;
+			letter-spacing: 1px;
+			color: #7cb342;
+		}
+
+		.barcode {
+			position: absolute;
+			top: 5px;
+			right: 28px;
+			width: 192px;
+			text-align: center;
+			
+		}
+
+		.barcode svg{
+			
+		}
+		.barcode .no {
+			margin-top: -4px;
+			font-size: 13px;
+			letter-spacing: 2px;
+			color: #455a64;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="tag">
+		<div class="hd">
+			<span class="cat">新鲜时蔬产地直供直供</span>
+			<h1>大白菜</h1>
+			<div class="en">Chinese Cabbage · Fresh Daily</div>
+		</div>
+
+		<div class="badge">
+			<div class="ring"></div>
+			<div class="t1">促销</div>
+			<div class="t2">SALE</div>
+			<div class="d1"></div>
+			<div class="d2"></div>
+		</div>
+
+		<div class="bd">
+			<div class="veggie">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+					<circle cx="120" cy="118" r="86" fill="#43a047" />
+					<circle cx="120" cy="52" r="46" fill="#66bb6a" />
+					<circle cx="62" cy="80" r="44" fill="#81c784" />
+					<circle cx="178" cy="80" r="44" fill="#81c784" />
+					<circle cx="46" cy="136" r="44" fill="#66bb6a" />
+					<circle cx="194" cy="136" r="44" fill="#66bb6a" />
+					<circle cx="88" cy="186" r="40" fill="#a5d6a7" />
+					<circle cx="152" cy="186" r="40" fill="#a5d6a7" />
+					<circle cx="120" cy="186" r="36" fill="#c8e6c9" />
+					<path d="M 120 56 L 96 44" fill="none" stroke="#388e3c" stroke-width="3" stroke-linecap="round" />
+					<path d="M 120 56 L 144 44" fill="none" stroke="#388e3c" stroke-width="3" stroke-linecap="round" />
+					<circle cx="120" cy="124" r="54" fill="#dcedc8" />
+					<circle cx="120" cy="124" r="36" fill="#f1f8e9" />
+					<rect x="102" y="170" width="36" height="26" rx="9" fill="#fff8e1" />
+					<circle cx="102" cy="114" r="7" fill="#2e7d32" />
+					<circle cx="138" cy="114" r="7" fill="#2e7d32" />
+					<circle cx="99.5" cy="111" r="2.2" fill="#ffffff" />
+					<circle cx="135.5" cy="111" r="2.2" fill="#ffffff" />
+					<path d="M 96 132 Q 120 150 144 132" fill="none" stroke="#2e7d32" stroke-width="5"
+						stroke-linecap="round" />
+					<circle cx="88" cy="128" r="8" fill="#ff8a80" />
+					<circle cx="152" cy="128" r="8" fill="#ff8a80" />
+				</svg>
+			</div>
+
+			<div class="info"> 
+				<span class="sale">限时特惠</span>
+				<div class="old">原价<span class="strike">¥9.99</span></div>
+				<div class="new"><span class="big">0.76</span><span class="unit">元</span></div>
+				<div class="save"> <span class="off">0.8折</span> <span class="save-txt">立省 ¥9.23</span> </div>
+				<div class="origin"><span class="dot"></span>产地：山东</div>
+			</div>
+			<div class="bub1"></div>
+			<div class="bub2"></div>
+			<div class="bub3"></div>
+
+		</div>
+
+		<div class="ft">
+			<div class="line1">新鲜直采 · 当日上架</div>
+			<div class="line2">从田间到货架 · 只隔一天</div>
+			<div class="barcode">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 52" width="192" height="52">
+					<rect x="0" y="0" width="3" height="46" fill="#263238" />
+					<rect x="5" y="0" width="1" height="46" fill="#263238" />
+					<rect x="8" y="0" width="1" height="46" fill="#263238" />
+					<rect x="11" y="0" width="3" height="46" fill="#263238" />
+					<rect x="16" y="0" width="2" height="46" fill="#263238" />
+					<rect x="20" y="0" width="2" height="46" fill="#263238" />
+					<rect x="24" y="0" width="2" height="46" fill="#263238" />
+					<rect x="28" y="0" width="1" height="46" fill="#263238" />
+					<rect x="31" y="0" width="1" height="46" fill="#263238" />
+					<rect x="34" y="0" width="4" height="46" fill="#263238" />
+					<rect x="40" y="0" width="1" height="46" fill="#263238" />
+					<rect x="43" y="0" width="1" height="46" fill="#263238" />
+					<rect x="46" y="0" width="1" height="46" fill="#263238" />
+					<rect x="49" y="0" width="2" height="46" fill="#263238" />
+					<rect x="53" y="0" width="2" height="46" fill="#263238" />
+					<rect x="57" y="0" width="1" height="46" fill="#263238" />
+					<rect x="60" y="0" width="2" height="46" fill="#263238" />
+					<rect x="64" y="0" width="4" height="46" fill="#263238" />
+					<rect x="70" y="0" width="2" height="46" fill="#263238" />
+					<rect x="74" y="0" width="4" height="46" fill="#263238" />
+					<rect x="80" y="0" width="3" height="46" fill="#263238" />
+					<rect x="85" y="0" width="1" height="46" fill="#263238" />
+					<rect x="88" y="0" width="2" height="46" fill="#263238" />
+					<rect x="92" y="0" width="4" height="46" fill="#263238" />
+					<rect x="98" y="0" width="3" height="46" fill="#263238" />
+					<rect x="103" y="0" width="3" height="46" fill="#263238" />
+					<rect x="108" y="0" width="2" height="46" fill="#263238" />
+					<rect x="112" y="0" width="2" height="46" fill="#263238" />
+					<rect x="116" y="0" width="3" height="46" fill="#263238" />
+					<rect x="121" y="0" width="1" height="46" fill="#263238" />
+					<rect x="124" y="0" width="1" height="46" fill="#263238" />
+					<rect x="127" y="0" width="4" height="46" fill="#263238" />
+					<rect x="133" y="0" width="1" height="46" fill="#263238" />
+					<rect x="136" y="0" width="3" height="46" fill="#263238" />
+					<rect x="141" y="0" width="3" height="46" fill="#263238" />
+					<rect x="146" y="0" width="3" height="46" fill="#263238" />
+					<rect x="151" y="0" width="1" height="46" fill="#263238" />
+					<rect x="154" y="0" width="4" height="46" fill="#263238" />
+					<rect x="160" y="0" width="1" height="46" fill="#263238" />
+					<rect x="163" y="0" width="4" height="46" fill="#263238" />
+					<rect x="169" y="0" width="1" height="46" fill="#263238" />
+					<rect x="172" y="0" width="3" height="46" fill="#263238" />
+					<rect x="177" y="0" width="3" height="46" fill="#263238" />
+					<rect x="182" y="0" width="2" height="46" fill="#263238" />
+					<rect x="186" y="0" width="1" height="46" fill="#263238" />
+					<rect x="189" y="0" width="3" height="46" fill="#263238" />
+				</svg>
+				<div class="no">6 901234 567890</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>
