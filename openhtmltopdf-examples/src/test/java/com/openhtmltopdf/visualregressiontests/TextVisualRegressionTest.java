@@ -652,6 +652,31 @@ public class TextVisualRegressionTest {
         assertTrue(run("columns-floats-unbalanced"));
     }
 
+    /**
+     * Tests combination of columns and footnotes.
+     */
+    @Test
+    public void testColumnsFootnote() throws IOException {
+        assertTrue(run("columns-footnote"));
+    }
+
+    /**
+     * Tests footnote calls inside columns, including one in the right column
+     * whose footnote area would overlap the full left column.
+     */
+    @Test
+    public void testColumnsFootnoteInside() throws IOException {
+        assertTrue(run("columns-footnote-inside"));
+    }
+
+    /**
+     * Tests footnote calls inside columns from a float and from an inline-block.
+     */
+    @Test
+    public void testColumnsFootnoteNested() throws IOException {
+        assertTrue(run("columns-footnote-nested"));
+    }
+
     private static class WatermarkDrawer implements FSObjectDrawer {
         @Override
         public Map<Shape, String> drawObject(Element e, double x, double y, double width, double height,

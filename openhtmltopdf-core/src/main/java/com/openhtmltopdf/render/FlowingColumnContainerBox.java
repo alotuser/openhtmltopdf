@@ -3,7 +3,9 @@ package com.openhtmltopdf.render;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +20,9 @@ import com.openhtmltopdf.layout.LayoutContext;
 import com.openhtmltopdf.layout.PersistentBFC;
 
 public class FlowingColumnContainerBox extends BlockBox {
+    // Guards against a page being laid out again and again for its footnotes.
+    private static final int MAX_PAGE_RESTARTS = 100;
+
     private FlowingColumnBox _child;
 
     private int findPageIndex(LayoutContext c, int y) {
@@ -156,6 +161,117 @@ public class FlowingColumnContainerBox extends BlockBox {
         // or overflow: hidden it will produce incorrect results.
     }
     
+    private static class SavedPosition {
+        private final Box box;
+        private final int x;
+        private final int y;
+        private final int absX;
+        private final int absY;
+
+        private SavedPosition(Box box) {
+            this.box = box;
+            this.x = box.getX();
+            this.y = box.getY();
+            this.absX = box.getAbsX();
+            this.absY = box.getAbsY();
+        }
+
+        private void restore() {
+            box.setX(x);
+            box.setY(y);
+            box.setAbsX(absX);
+            box.setAbsY(absY);
+        }
+    }
+
+    /**
+     * The footnote bodies called from a box, including from lines nested in it
+     * such as those of an inline-block.
+     */
+    private static List<BlockBox> footnoteBodies(Box box) {
+        Set<BlockBox> bodies = new LinkedHashSet<>();
+        collectFootnoteBodies(box, bodies);
+        return new ArrayList<>(bodies);
+    }
+
+    private static void collectFootnoteBodies(Box box, Set<BlockBox> bodies) {
+        if (box instanceof LineBox && ((LineBox) box).hasFootnotes()) {
+            bodies.addAll(((LineBox) box).getReferencedFootnoteBodies());
+        }
+
+        if (box instanceof InlineLayoutBox && ((InlineLayoutBox) box).getInlineChildren() != null) {
+            for (Object inlineChild : ((InlineLayoutBox) box).getInlineChildren()) {
+                if (inlineChild instanceof Box) {
+                    collectFootnoteBodies((Box) inlineChild, bodies);
+                }
+            }
+        }
+
+        for (Box child : box.getChildren()) {
+            collectFootnoteBodies(child, bodies);
+        }
+    }
+
+    /**
+     * Finds the footnote bodies called from each break opportunity. Footnotes called from
+     * floats go with the break opportunity they float beside, as floats are only moved
+     * into columns after the break opportunities.
+     */
+    private Map<Box, List<BlockBox>> findFootnotes(List<ColumnBreakOpportunity> breaks) {
+        Map<Box, List<BlockBox>> footnotes = new HashMap<>();
+        Set<BlockBox> seen = new HashSet<>();
+
+        for (ColumnBreakOpportunity br : breaks) {
+            List<BlockBox> bodies = footnoteBodies(br.box);
+            if (!bodies.isEmpty()) {
+                footnotes.put(br.box, bodies);
+                seen.addAll(bodies);
+            }
+        }
+
+        if (breaks.isEmpty()) {
+            return footnotes;
+        }
+
+        FloatManager floatManager = this.getPersistentBFC().getFloatManager();
+        List<BoxOffset> floats = new ArrayList<>(floatManager.getFloats(FloatManager.FloatDirection.LEFT));
+        floats.addAll(floatManager.getFloats(FloatManager.FloatDirection.RIGHT));
+
+        for (BoxOffset bo : floats) {
+            BlockBox floater = bo.getBox();
+            List<BlockBox> bodies = footnoteBodies(floater);
+            bodies.removeAll(seen);
+
+            if (!bodies.isEmpty()) {
+                Box anchor = breaks.get(0).box;
+                for (ColumnBreakOpportunity br : breaks) {
+                    if (br.box.getAbsY() <= floater.getAbsY()) {
+                        anchor = br.box;
+                    }
+                }
+                footnotes.computeIfAbsent(anchor, k -> new ArrayList<>()).addAll(bodies);
+                seen.addAll(bodies);
+            }
+        }
+
+        return footnotes;
+    }
+
+    private static void addFootnotes(LayoutContext c, List<BlockBox> bodies, PageBox page, int lineHeight) {
+        for (BlockBox footnoteBody : bodies) {
+            c.getFootnoteManager().addFootnoteBody(c, footnoteBody, page, lineHeight);
+        }
+    }
+
+    /**
+     * The bottom of the columns on a page, above its footnote area. A page that had to be
+     * laid out again because a footnote from the columns grew its footnote area keeps
+     * room for that area in reserve.
+     */
+    private static int columnBottom(LayoutContext c, PageBox page, int pageIdx, Map<Integer, Integer> footnoteReserve) {
+        return Math.min(page.getBottom(c), page.getBottom() - footnoteReserve.getOrDefault(pageIdx, 0));
+    }
+
     private int adjustUnbalanced(LayoutContext c, Box child, int colGap, int colWidth, int columnCount, int xStart) {
         // At the start of this method we have one long column in child.
         // This method works by going through the boxes and adjusting their position
@@ -174,22 +290,34 @@ public class FlowingColumnContainerBox extends BlockBox {
         // These are all running values that change as we layout our boxes into columns.
         int pageIdx      = findPageIndex(c, startY);
         int colStart     = startY;
-        int colHeight    = pages.get(pageIdx).getBottom() - this.getChild().getAbsY();
+        int colHeight    = pages.get(pageIdx).getBottom(c) - this.getChild().getAbsY();
         int colIdx       = 0;
         int finalHeight  = 0;
 
-        if (child.getHeight() <= colHeight) {
+        // Recursively find all the column break opportunities (typically line boxes).
+        ColumnBreakStore store = new ColumnBreakStore();
+        child.findColumnBreakOpportunities(store);
+
+        // Footnote calls in the columns are added to the page of their line once the line
+        // is in its column. This grows the footnote area, so the page may have to be laid out again.
+        // FIXME: Don't sort if we have in order - common case.
+        Collections.sort(store.breaks, 
+                Comparator.comparingInt(brk -> brk.box.getAbsY() + brk.box.getBorderBoxHeight(c)));
+        final Map<Box, List<BlockBox>> footnotes = findFootnotes(store.breaks);
+        final boolean haveFootnotes = !footnotes.isEmpty();
+
+        if (child.getHeight() <= colHeight && !haveFootnotes) {
             // We fit in the first column.
             return child.getHeight();
         }
         
-        // Recursively find all the column break opportunities (typically line boxes).
-        ColumnBreakStore store = new ColumnBreakStore();
-        child.findColumnBreakOpportunities(store);
-        
         if (store.breaks.isEmpty() || store.breaks.size() == 1) {
             // Nothing we can do except overflow.
             // The only break is at the start of the first child.
+            if (haveFootnotes) {
+                Box only = store.breaks.get(0).box;
+                addFootnotes(c, footnotes.get(only), pages.get(pageIdx), only.getHeight());
+            }
             return this.getChild().getHeight();
         }
 
@@ -198,15 +326,35 @@ public class FlowingColumnContainerBox extends BlockBox {
         if (haveFloats) {
             columnMap.put(colStart, current);
         }
-         
-        // FIXME: Don't sort if we have in order - common case.
-        Collections.sort(store.breaks, 
-                Comparator.comparingInt(brk -> brk.box.getAbsY() + brk.box.getBorderBoxHeight(c)));
+
+        // State at the start of the current page, to lay it out again when a footnote
+        // pushes its footnote area into content already placed on the page.
+        final Map<Integer, Integer> footnoteReserve = new HashMap<>();
+        final List<SavedPosition> pageMoves = new ArrayList<>();
+        final List<Box> pageFootnoteBreaks = new ArrayList<>();
+        int pageStartBreak = 0;
+        ColumnPosition pageStartColumn = current;
+        int pageStartFinalHeight = finalHeight;
+        int pageContentBottom = Integer.MIN_VALUE;
+        int pageRestarts = 0;
+        // The break whose footnote last made us reserve room on this page, the reserve
+        // before it and, if that break moved on to the next page, where this page ends.
+        int reserveBreak = -1;
+        int reserveBefore = 0;
+        int pageEndBefore = -1;
         
         for (int i = 0; i < store.breaks.size(); i++) {
             ColumnBreakOpportunity br = store.breaks.get(i);
             ColumnBreakOpportunity nextBr = i < store.breaks.size() - 1 ? store.breaks.get(i + 1) : null;
             Box ch = br.box;
+            boolean restartPage = false;
+
+            if (haveFootnotes) {
+                pageMoves.add(new SavedPosition(ch));
+                if (br.ancestors != null) {
+                    br.ancestors.forEach(ancestor -> pageMoves.add(new SavedPosition(ancestor)));
+                }
+            }
 
             int yAdjust = current.pasteY - current.copyY;
             int yProposedFinal = ch.getAbsY() + yAdjust;
@@ -234,38 +382,122 @@ public class FlowingColumnContainerBox extends BlockBox {
                 // We do not call this on other kind of boxes as it would undo our work in moving them.
                 ch.calcChildLocations();
             }
+
+            pageContentBottom = Math.max(pageContentBottom, yProposedFinal + ch.getBorderBoxHeight(c));
+
+            if (haveFootnotes && footnotes.containsKey(ch)) {
+                PageBox page = pages.get(current.pageIdx);
+                addFootnotes(c, footnotes.get(ch), page, ch.getHeight());
+                pageFootnoteBreaks.add(ch);
+                int reserve = footnoteReserve.getOrDefault(current.pageIdx, 0);
+
+                if (pageContentBottom > page.getBottom(c) &&
+                    page.getFootnoteAreaHeight() > reserve &&
+                    pageRestarts < MAX_PAGE_RESTARTS) {
+                    // The footnote area now overlaps content placed on this page, possibly
+                    // in an earlier column. Keep room for the footnote area and lay out
+                    // this page again. The reserve only ever grows, so this ends.
+                    footnoteReserve.put(current.pageIdx, page.getFootnoteAreaHeight());
+                    reserveBreak = i;
+                    reserveBefore = reserve;
+                    restartPage = true;
+                }
+            }
  
-            if (nextBr != null) {
+            if (!restartPage && nextBr != null) {
                 Box next = nextBr.box;
                 int nextYHeight = next.getAbsY() + yAdjust + next.getBorderBoxHeight(c) - current.pasteY;
+
+                // A footnote from this column shortens it, so we check against the page as it is now.
+                int maxColHeight = haveFootnotes ?
+                        columnBottom(c, pages.get(current.pageIdx), current.pageIdx, footnoteReserve) - current.pasteY :
+                        current.maxColHeight;
+
+                boolean endPage = i + 1 == pageEndBefore;
                 
-                if (nextYHeight > current.maxColHeight ||
+                if (nextYHeight > maxColHeight ||
+                    endPage ||
                     ch.getStyle().isColumnBreakAfter() ||
                     next.getStyle().isColumnBreakBefore()) {
                     // We have moved past the bottom of the current column (or explicit break).
                     // Time for a new column.
                     // FIXME: What if box doesn't fit in new column either?
-                    int newColIdx = colIdx + 1;
+                    int newColIdx = endPage ? (colIdx / columnCount + 1) * columnCount : colIdx + 1;
                 
                     // And possibly a new page.
                     boolean needNewPage = newColIdx % columnCount == 0;
-                    int newPageIdx = needNewPage ? current.pageIdx + 1 : current.pageIdx;
 
-                    if (newPageIdx >= pages.size()) {
-                        c.getRootLayer().addPage(c);
-                    }
+                    if (needNewPage && reserveBreak > i && pageEndBefore < 0 && pageRestarts < MAX_PAGE_RESTARTS) {
+                        // The line we reserved room for its footnote did not stay on this page
+                        // and took its footnote along. Lay out this page as it was before
+                        // that footnote but end it before that line, as in normal flow.
+                        footnoteReserve.put(current.pageIdx, reserveBefore);
+                        pageEndBefore = reserveBreak;
+                        restartPage = true;
+                    } else {
+                        int newPageIdx = needNewPage ? current.pageIdx + 1 : current.pageIdx;
 
-                    // We need the y top of the new column.
-                    PageBox page = pages.get(newPageIdx);
-                    int pasteY = needNewPage ? page.getTop() : current.pasteY;
-                    int copyY  = next.getAbsY();
-                    
-                    current = new ColumnPosition(newColIdx, copyY, pasteY, page.getBottom() - pasteY, newPageIdx);
-                    if (haveFloats) {
-                        columnMap.put(copyY, current);
+                        if (newPageIdx >= pages.size()) {
+                            c.getRootLayer().addPage(c);
+                        }
+
+                        // We need the y top of the new column.
+                        PageBox page = pages.get(newPageIdx);
+                        int pasteY = needNewPage ? page.getTop() : current.pasteY;
+                        int copyY  = next.getAbsY();
+                        
+                        current = new ColumnPosition(newColIdx, copyY, pasteY,
+                                columnBottom(c, page, newPageIdx, footnoteReserve) - pasteY, newPageIdx);
+                        if (haveFloats) {
+                            columnMap.put(copyY, current);
+                        }
+                        colIdx = newColIdx;
+
+                        if (needNewPage) {
+                            pageStartBreak = i + 1;
+                            pageStartColumn = current;
+                            pageStartFinalHeight = finalHeight;
+                            pageContentBottom = Integer.MIN_VALUE;
+                            pageMoves.clear();
+                            pageFootnoteBreaks.clear();
+                            reserveBreak = -1;
+                            pageEndBefore = -1;
+                        }
                     }
-                    colIdx++;
                 }
+            }
+
+            if (restartPage) {
+                // Take back the footnotes and moves on this page and lay it out again.
+                pageRestarts++;
+
+                PageBox startPage = pages.get(pageStartColumn.pageIdx);
+                for (int k = pageFootnoteBreaks.size() - 1; k >= 0; k--) {
+                    Box placed = pageFootnoteBreaks.get(k);
+                    c.getFootnoteManager().removeFootnoteBodies(c, footnotes.get(placed), startPage, placed.getHeight());
+                }
+                pageFootnoteBreaks.clear();
+
+                for (int k = pageMoves.size() - 1; k >= 0; k--) {
+                    pageMoves.get(k).restore();
+                }
+                pageMoves.clear();
+
+                current = new ColumnPosition(
+                        pageStartColumn.columnIndex, pageStartColumn.copyY, pageStartColumn.pasteY,
+                        columnBottom(c, pages.get(pageStartColumn.pageIdx), pageStartColumn.pageIdx, footnoteReserve)
+                            - pageStartColumn.pasteY,
+                        pageStartColumn.pageIdx);
+                if (haveFloats) {
+                    columnMap.tailMap(pageStartColumn.copyY, true).clear();
+                    columnMap.put(current.copyY, current);
+                }
+                pageStartColumn = current;
+                colIdx = current.columnIndex;
+                finalHeight = pageStartFinalHeight;
+                pageContentBottom = Integer.MIN_VALUE;
+
+                i = pageStartBreak - 1;
             }
         }
         
