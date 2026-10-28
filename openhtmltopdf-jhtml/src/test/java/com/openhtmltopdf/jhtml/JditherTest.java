@@ -17,17 +17,28 @@ public class JditherTest {
 	public static void main(String[] args) throws IOException {
 		
 		
-		File file = new File("D:\\test\\333.png");
+		File file = new File("D:\\ai\\ai15.html.png");
 
-		ColorMode colorMode = ColorMode.BWRY;
-
-		DitherKernel ditherKernel = DitherKernel.SHIAU_FAN;
+//		ColorMode colorMode = ColorMode.BWRY;
+//		DitherKernel ditherKernel = DitherKernel.SHIAU_FAN;
+//		write(file, colorMode, ditherKernel);
 		
-
+		
+		for (ColorMode colorMode : ColorMode.values()) {
+			for (DitherKernel ditherKernel : DitherKernel.values()) {
+				write(file, colorMode, ditherKernel);
+			}
+		}
+ 
+		
+	}
+	
+	public static void write(File file,ColorMode colorMode, DitherKernel ditherKernel) throws IOException {
+		
 		String prefix = FileUtil.getPrefix(file);
-        String suffix = FileUtil.getSuffix(file);
-        String newName = prefix + "_" + colorMode.name() + "_" + ditherKernel.name() + "." + suffix;
-        File newFile = new File(file.getParent(), newName);
+		String suffix = FileUtil.getSuffix(file);
+		String newName = prefix + "_" + colorMode.name() + "_" + ditherKernel.name() + "." + suffix;
+		File newFile = new File(file.getParent(), newName);
 		
 		float useGamma = 1;
 
@@ -39,5 +50,9 @@ public class JditherTest {
 
 		System.out.println(newFile.getAbsolutePath());
 		
+		
+		
 	}
+	
+	
 }

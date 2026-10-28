@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8" />
+	<title>电子价签 - 胡萝卜</title>
+	<style>
+		@page {
+			size: 800px 480px;
+			margin: 0;
+			padding: 0;
+		}
+
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			width: 800px;
+			height: 480px;
+			box-sizing: border-box;
+		}
+
+		html {
+			font-family: 'TestFont';
+		}
+
+		.canvas {
+			width: 800px;
+			height: 480px;
+			box-sizing: border-box;
+			border: 6px solid #e2001a;
+			background-color: #ffffff;
+			overflow: hidden;
+		}
+
+		.layout {
+			width: 100%;
+			height: 100%;
+			border-collapse: collapse;
+		}
+
+		/* 第一行：商品名 + 右上角促销标签 */
+		.head-cell {
+			padding: 18px 22px 4px 22px;
+			vertical-align: middle;
+			background-color: #ffffff;
+		}
+
+		.head-inner {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		.head-name {
+			padding: 0;
+			vertical-align: middle;
+			font-size: 42px;
+			line-height: 52px;
+			font-weight: bold;
+			color: #000000;
+		}
+
+		.head-badge {
+			width: 170px;
+			padding: 0;
+			vertical-align: middle;
+			text-align: right;
+		}
+
+		.badge {
+			display: inline-block;
+			width: 120px;
+			height: 46px;
+			line-height: 46px;
+			background-color: #e2001a;
+			color: #ffffff;
+			font-size: 26px;
+			font-weight: bold;
+			text-align: center;
+			border-radius: 6px;
+		}
+
+		/* 第二行：副标题 */
+		.sub-cell {
+			padding: 0 22px 12px 22px;
+			vertical-align: middle;
+			font-size: 18px;
+			line-height: 28px;
+			letter-spacing: 2px;
+			color: #000000;
+			background-color: #ffffff;
+		}
+
+		/* 第三行：促销价放大展示 */
+		.price-cell {
+			padding: 4px 22px 8px 22px;
+			vertical-align: middle;
+			text-align: center;
+			background-color: #ffffff;
+		}
+
+		.price-tag {
+			font-size: 22px;
+			line-height: 30px;
+			letter-spacing: 4px;
+			color: #e2001a;
+		}
+
+		.price-main {
+			font-size: 138px;
+			line-height: 164px;
+			font-weight: bold;
+			color: #e2001a;
+		}
+
+		.price-cny {
+			font-size: 46px;
+		}
+
+		.price-unit {
+			font-size: 34px;
+		}
+
+		/* 第四行：原价划线 + 优惠提示 */
+		.orig-cell {
+			padding: 10px 26px 10px 26px;
+			vertical-align: middle;
+			background-color: #ffd400;
+		}
+
+		.orig-inner {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		.orig-left {
+			padding: 0;
+			vertical-align: middle;
+			font-size: 26px;
+			line-height: 36px;
+			color: #000000;
+		}
+
+		.strike {
+			text-decoration: line-through;
+		}
+
+		.orig-right {
+			width: 320px;
+			padding: 0;
+			vertical-align: middle;
+			text-align: right;
+		}
+
+		.save-badge {
+			display: inline-block;
+			width: 200px;
+			height: 34px;
+			line-height: 34px;
+			background-color: #e2001a;
+			color: #ffffff;
+			font-size: 18px;
+			text-align: center;
+			border-radius: 4px;
+		}
+
+		/* 第五行：底部信息条 */
+		.foot-cell {
+			padding: 14px 26px 14px 26px;
+			vertical-align: middle;
+			background-color: #000000;
+		}
+
+		.foot-inner {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		.foot-left {
+			padding: 0;
+			vertical-align: middle;
+			font-size: 30px;
+			line-height: 40px;
+			color: #ffffff;
+		}
+
+		.foot-right {
+			width: 320px;
+			padding: 0;
+			vertical-align: middle;
+			text-align: right;
+			font-size: 20px;
+			line-height: 40px;
+			color: #ffd400;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="canvas">
+		<table class="layout" cellpadding="0" cellspacing="0">
+			<tr>
+				<td class="head-cell">
+					<table class="head-inner" cellpadding="0" cellspacing="0">
+						<tr>
+							<td class="head-name">胡萝卜</td>
+							<td class="head-badge"><span class="badge">促销</span></td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td class="sub-cell">新鲜蔬菜&#160;&#160;产地直供</td>
+			</tr>
+			<tr>
+				<td class="price-cell">
+					<div class="price-tag">促销价</div>
+					<div class="price-main"><span class="price-cny">￥</span>0.76<span class="price-unit">元</span></div>
+				</td>
+			</tr>
+			<tr>
+				<td class="orig-cell">
+					<table class="orig-inner" cellpadding="0" cellspacing="0">
+						<tr>
+							<td class="orig-left">原价：<span class="strike">￥9.99</span></td>
+							<td class="orig-right"><span class="save-badge">立省 9.23 元</span></td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td class="foot-cell">
+					<table class="foot-inner" cellpadding="0" cellspacing="0">
+						<tr>
+							<td class="foot-left">产地：山东</td>
+							<td class="foot-right">计价单位：元</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</div>
+</body>
+
+</html>

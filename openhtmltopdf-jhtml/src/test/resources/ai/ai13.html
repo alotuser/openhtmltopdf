@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8" />
+	<title>电子价签</title>
+	<style>
+		@page {
+			size: 800px 480px;
+			margin: 0;
+			padding: 0;
+		}
+
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			width: 800px;
+			height: 480px;
+			box-sizing: border-box;
+		}
+
+		html {
+			font-family: 'TestFont';
+		}
+
+		.canvas {
+			width: 100%;
+			height: 100%;
+			box-sizing: border-box;
+			overflow: hidden;
+		}
+
+		.layout {
+			width: 100%;
+			border-collapse: collapse;
+			height: 100%;
+		}
+
+		.inner {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		.bar {
+			background-color: #f7f7f7;
+			border-bottom: 2px solid #ececec;
+			padding: 24px 32px;
+		}
+
+		.titleCell {
+			width: 480px;
+			vertical-align: middle;
+			text-align: left;
+		}
+
+		.title {
+			font-size: 44px;
+			line-height: 56px;
+			font-weight: bold;
+			color: #222222;
+		}
+
+		.badgeCell {
+			width: 250px;
+			vertical-align: middle;
+			text-align: right;
+		}
+
+		.badge {
+			display: inline-block;
+			width: 150px;
+			text-align: center;
+			background-color: #d0021b;
+			color: #ffffff;
+			font-size: 28px;
+			line-height: 40px;
+			font-weight: bold;
+			padding: 6px 0;
+			border-radius: 8px;
+		}
+
+		.priceArea {
+			background-color: #ffffff;
+			padding: 18px 32px;
+		}
+
+		.priceCell {
+			width: 500px;
+			vertical-align: middle;
+			text-align: left;
+		}
+
+		.promoLabel {
+			font-size: 28px;
+			line-height: 36px;
+			font-weight: bold;
+			color: #d0021b;
+		}
+
+		.promoPrice {
+			font-size: 140px;
+			line-height: 164px;
+			font-weight: bold;
+			color: #d0021b;
+		}
+
+		.origCell {
+			width: 230px;
+			vertical-align: middle;
+			text-align: right;
+		}
+
+		.origLabel {
+			font-size: 26px;
+			line-height: 34px;
+			color: #999999;
+		}
+
+		.origPrice {
+			font-size: 44px;
+			line-height: 56px;
+			color: #999999;
+			text-decoration: line-through;
+		}
+
+		.infoBar {
+			background-color: #f7f7f7;
+			border-top: 2px solid #ececec;
+			padding: 30px 32px;
+		}
+
+		.infoLeft {
+			font-size: 30px;
+			line-height: 40px;
+			color: #555555;
+			text-align: left;
+		}
+
+		.infoRight {
+			font-size: 30px;
+			line-height: 40px;
+			color: #555555;
+			text-align: right;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="canvas">
+		<table class="layout" cellpadding="0" cellspacing="0">
+			<tr>
+				<td class="bar">
+					<table class="inner" cellpadding="0" cellspacing="0">
+						<tr>
+							<td class="titleCell">
+								<div class="title">苹果</div>
+							</td>
+							<td class="badgeCell"><span class="badge">促销</span></td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td class="priceArea">
+					<table class="inner" cellpadding="0" cellspacing="0">
+						<tr>
+							<td class="priceCell">
+								<div class="promoLabel">促销价</div>
+								<div class="promoPrice">¥0.76</div>
+							</td>
+							<td class="origCell">
+								<div class="origLabel">原价</div>
+								<div class="origPrice">¥9.99</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td class="infoBar">
+					<table class="inner" cellpadding="0" cellspacing="0">
+						<tr>
+							<td class="infoLeft">产地：山东</td>
+							<td class="infoRight">计价单位：500g</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</div>
+</body>
+
+</html>

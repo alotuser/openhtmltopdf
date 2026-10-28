@@ -1,0 +1,206 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>电子价签 - 胡萝卜</title>
+<style>
+@page {
+    size: 800px 480px;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 800px;
+    height: 480px;
+    box-sizing: border-box;
+}
+
+html {
+    font-family: 'TestFont';
+}
+
+.canvas {
+    width: 800px;
+    height: 480px;
+    box-sizing: border-box;
+    border: 4px solid #C62828;
+    background-color: #FFFDF6;
+    overflow: hidden;
+}
+
+.layout {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+}
+
+.layout td {
+    padding: 0;
+    vertical-align: middle;
+}
+
+.c-name {
+    width: 490px;
+}
+
+.c-tag {
+    width: 302px;
+}
+
+.headL {
+    padding: 18px 6px 10px 30px;
+    font-size: 46px;
+    line-height: 58px;
+    font-weight: bold;
+    color: #262626;
+}
+
+.headR {
+    padding: 18px 30px 10px 0;
+    text-align: right;
+}
+
+.tag {
+    display: inline-block;
+    width: 152px;
+    height: 46px;
+    line-height: 46px;
+    text-align: center;
+    font-size: 26px;
+    color: #FFFFFF;
+    background-color: #D32F2F;
+}
+
+.c-price {
+    background-color: #FFF4F1;
+}
+
+.c-old {
+    background-color: #FFF4F1;
+}
+
+.priceL {
+    padding: 6px 10px 10px 30px;
+}
+
+.plabel {
+    font-size: 28px;
+    line-height: 38px;
+    color: #D32F2F;
+}
+
+.pnum {
+    font-size: 120px;
+    line-height: 136px;
+    font-weight: bold;
+    color: #C62828;
+}
+
+.pcur {
+    font-size: 58px;
+}
+
+.punit {
+    font-size: 30px;
+    line-height: 40px;
+    color: #8C5A46;
+}
+
+.priceR {
+    padding: 0 30px 0 0;
+    text-align: right;
+}
+
+.olabel {
+    font-size: 24px;
+    line-height: 32px;
+    color: #8A8A8A;
+}
+
+.onum {
+    font-size: 44px;
+    line-height: 54px;
+    color: #8A8A8A;
+}
+
+.strike {
+    text-decoration: line-through;
+}
+
+.osave {
+    font-size: 22px;
+    line-height: 30px;
+    color: #C62828;
+}
+
+.specbar {
+    padding: 12px 30px;
+    font-size: 26px;
+    line-height: 36px;
+    color: #4A4A4A;
+    background-color: #F6F1E9;
+    border-top: 1px solid #E8DED2;
+}
+
+.footbar {
+    padding: 8px 30px;
+    text-align: center;
+    background-color: #C62828;
+}
+
+.f1 {
+    font-size: 28px;
+    line-height: 36px;
+    color: #FFFFFF;
+}
+
+.f2 {
+    font-size: 20px;
+    line-height: 26px;
+    color: #FFE6E0;
+}
+</style>
+</head>
+<body>
+<div class="canvas">
+<table class="layout" cellpadding="0" cellspacing="0">
+<tr>
+<td class="c-name"><div class="headL">胡萝卜</div></td>
+<td class="c-tag"><div class="headR"><span class="tag">促销</span></div></td>
+</tr>
+<tr>
+<td class="c-price">
+<div class="priceL">
+<div class="plabel">促销价</div>
+<div class="pnum"><span class="pcur">&#165;</span><span class="pval">0.76</span></div>
+<div class="punit">元 / 500g</div>
+</div>
+</td>
+<td class="c-old">
+<div class="priceR">
+<div class="olabel">原价</div>
+<div class="onum"><span class="strike">&#165;9.99</span></div>
+<div class="osave">立省 9.23 元</div>
+</div>
+</td>
+</tr>
+<tr>
+<td colspan="2">
+<div class="specbar">产地：山东&#160;&#160;&#160;&#160;计价单位：元 / 500g&#160;&#160;&#160;&#160;当日上新 &#183; 新鲜到货</div>
+</td>
+</tr>
+<tr>
+<td colspan="2">
+<div class="footbar">
+<div class="f1">门店特惠 &#183; 限时供应</div>
+<div class="f2">价格以门店当日标价为准，数量有限，售完即止</div>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

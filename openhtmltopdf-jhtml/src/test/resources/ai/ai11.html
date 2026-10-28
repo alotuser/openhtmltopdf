@@ -1,0 +1,176 @@
+ <html>
+<head>
+<meta charset="UTF-8" />
+<title>电子价签 - 胡萝卜</title>
+<style>
+@page {
+    size: 800px 480px;
+    margin: 0;
+    padding: 0;
+}
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 800px;
+    height: 480px;
+    box-sizing: border-box;
+}
+html {
+    font-family: 'TestFont';
+}
+.canvas {
+    width: 800px;
+    height: 480px;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    border: 4px solid #000000;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.layout {
+    width: 100%;
+    border-collapse: collapse;
+}
+.name-cell {
+    width: 664px;
+    padding: 22px 30px 22px 40px;
+    background-color: #ffd400;
+    vertical-align: middle;
+}
+.name-row {
+    width: 594px;
+    border-collapse: collapse;
+}
+.name-left {
+    text-align: left;
+    vertical-align: middle;
+}
+.name {
+    font-size: 44px;
+    line-height: 52px;
+    font-weight: bold;
+    color: #000000;
+}
+.name-right {
+    width: 160px;
+    font-size: 24px;
+    line-height: 32px;
+    color: #000000;
+    text-align: right;
+    vertical-align: middle;
+}
+.badge-cell {
+    width: 128px;
+    padding: 22px 10px;
+    background-color: #e60012;
+    text-align: center;
+    vertical-align: middle;
+}
+.badge {
+    font-size: 32px;
+    line-height: 44px;
+    font-weight: bold;
+    color: #ffffff;
+}
+.old-cell {
+    padding: 20px 40px;
+    border-top: 3px solid #000000;
+    font-size: 28px;
+    line-height: 36px;
+    text-align: center;
+    vertical-align: middle;
+}
+.old-label {
+    font-weight: bold;
+    color: #000000;
+}
+.old-price {
+    font-size: 34px;
+    line-height: 42px;
+    color: #000000;
+    text-decoration: line-through;
+}
+.price-cell {
+    padding: 16px 40px 24px 40px;
+    font-size: 60px;
+    text-align: center;
+    vertical-align: middle;
+}
+.p-tag {
+    display: inline-block;
+    width: 140px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #e60012;
+    text-align: center;
+    vertical-align: middle;
+}
+.p-num {
+    font-size: 120px;
+    line-height: 130px;
+    font-weight: bold;
+    color: #e60012;
+}
+.p-unit {
+    font-size: 36px;
+    line-height: 44px;
+    font-weight: bold;
+    color: #e60012;
+}
+.origin-cell {
+    padding: 20px 40px 24px 40px;
+    font-size: 32px;
+    line-height: 44px;
+    text-align: left;
+    vertical-align: middle;
+}
+.o-tag {
+    display: inline-block;
+    width: 100px;
+    height: 42px;
+    line-height: 42px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #000000;
+    text-align: center;
+    vertical-align: middle;
+}
+.o-text {
+    font-size: 32px;
+    line-height: 44px;
+    color: #000000;
+}
+</style>
+</head>
+<body>
+<div class="canvas">
+<table class="layout" cellpadding="0" cellspacing="0">
+<tr>
+<td class="name-cell">
+<table class="name-row" cellpadding="0" cellspacing="0">
+<tr>
+<td class="name-left"><span class="name">胡萝卜</span></td>
+<td class="name-right">新鲜货品</td>
+</tr>
+</table>
+</td>
+<td class="badge-cell"><span class="badge">促销</span></td>
+</tr>
+<tr>
+<td class="old-cell" colspan="2"><span class="old-label">原价</span>&#160;<span class="old-price">¥9.99</span></td>
+</tr>
+<tr>
+<td class="price-cell" colspan="2"><span class="p-tag">促销价</span>&#160;<span class="p-num">¥0.76</span>&#160;<span class="p-unit">元</span></td>
+</tr>
+<tr>
+<td class="origin-cell" colspan="2"><span class="o-tag">产地</span>&#160;<span class="o-text">山东</span></td>
+</tr>
+</table>
+</div>
+</body>
+</html>
