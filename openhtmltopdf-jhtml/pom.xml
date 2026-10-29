@@ -68,6 +68,17 @@
 			<version>1.23.2</version>
 		</dependency>
 		<dependency>
+            <groupId>org.thymeleaf</groupId>
+            <artifactId>thymeleaf</artifactId>
+            <version>3.1.5.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-java8time</artifactId>
+            <version>3.0.4.RELEASE</version>
+        </dependency>
+		<dependency>
 		    <groupId>org.htmlunit</groupId>
 		    <artifactId>htmlunit-jsoup</artifactId>
 		    <version>4.21.0</version>
