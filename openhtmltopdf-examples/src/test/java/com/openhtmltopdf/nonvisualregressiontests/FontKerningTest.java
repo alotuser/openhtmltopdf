@@ -511,16 +511,17 @@ public class FontKerningTest {
     }
 
     /**
-     * Under <code>white-space: pre-line</code> and <code>pre-wrap</code> a line keeps
-     * its trailing space, so nothing hangs there: a right-aligned line that would fit
-     * only without that space breaks before its last word and stays in its box.
+     * Under <code>white-space: pre-line</code>, which removes the space that ends a
+     * line, and <code>pre-wrap</code>, which keeps it, that space hangs too: a
+     * right-aligned line that fits only without it keeps its last word and stays in
+     * its box (#266).
      */
     @Test
-    public void testNoHangWhereTheTrailingSpaceIsKept() throws IOException {
+    public void testTheTrailingSpaceHangsUnderPreLineAndPreWrap() throws IOException {
         float boxPt = unkernedWidthPt("mill mill") + unkernedWidthPt(" ") / 2;
         for (String whiteSpace : new String[] { "pre-line", "pre-wrap" }) {
             assertLinesStayInTheirBox("mill mill mill", boxPt, "white-space: " + whiteSpace + ";");
-            assertEquals(whiteSpace + ": the first line", "mill",
+            assertEquals(whiteSpace + ": the first line", "millmill",
                     text(lines(true, "width: " + boxPt + "pt; white-space: " + whiteSpace + ";", "mill mill mill").get(0)));
         }
     }
@@ -809,14 +810,27 @@ public class FontKerningTest {
     }
 
     /**
+     * The last glyph of a line that shows something: a line can end in a space,
+     * drawn past its end to keep its last word apart from the next line's first.
+     */
+    private static TextPosition lastVisible(List<TextPosition> line) {
+        for (int i = line.size() - 1; i > 0; i--) {
+            if (!line.get(i).getUnicode().trim().isEmpty()) {
+                return line.get(i);
+            }
+        }
+        return line.get(0);
+    }
+
+    /**
      * The distance from the left edge of each line's first glyph to the right edge
-     * of its last, in points.
+     * of its last visible one, in points.
      */
     private static List<Float> lineWidths(boolean kerning, String css, String text) throws IOException {
         List<Float> result = new ArrayList<>();
 
         for (List<TextPosition> line : lines(kerning, css, text)) {
-            TextPosition last = line.get(line.size() - 1);
+            TextPosition last = lastVisible(line);
             result.add(last.getXDirAdj() + last.getWidthDirAdj() - line.get(0).getXDirAdj());
         }
 
@@ -824,13 +838,13 @@ public class FontKerningTest {
     }
 
     /**
-     * The right edge of each line's last glyph, in points.
+     * The right edge of each line's last visible glyph, in points.
      */
     private static List<Float> rightEdges(boolean kerning, String css, String text) throws IOException {
         List<Float> result = new ArrayList<>();
 
         for (List<TextPosition> line : lines(kerning, css, text)) {
-            TextPosition last = line.get(line.size() - 1);
+            TextPosition last = lastVisible(line);
             result.add(last.getXDirAdj() + last.getWidthDirAdj());
         }
 
