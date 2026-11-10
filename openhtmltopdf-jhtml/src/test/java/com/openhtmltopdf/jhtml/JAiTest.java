@@ -17,7 +17,7 @@ public class JAiTest {
 
 	public static void main(String[] args) throws IOException {
 
-		String resHtml = "ai/ai15.html";
+		String resHtml = "ai/0.html";
 		String html = ResourceUtil.readUtf8Str(resHtml);
 		URL fonts = ResourceUtil.getResource("fonts");
 
