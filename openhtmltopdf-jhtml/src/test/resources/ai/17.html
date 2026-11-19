@@ -1,0 +1,225 @@
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>胡萝卜 促销价签</title>
+<!--
+  高度问题根因说明（不影响渲染）：
+  1. 之前用 table{height:100%} + 让引擎把剩余高度分给“最后一行”，还额外加了空白行吸收余量，
+     垂直空间由引擎自行分配 -> 行高与设计值不符，文字自然下沉/贴底。
+  2. 单元格内用 vertical-align: middle 配合大 line-height 居中，openhtmltopdf 对单元格垂直居中
+     口径与浏览器不一致，内容容易偏下。
+  本版改法：不再依赖百分比高度与垂直居中，每一行用“内层 div 固定 height = line-height”
+     精确决定高度，行高完全确定；表格行高合计 = 画布内容区 472px，无剩余空间可被错误分配。
+     68 + 100 + 220 + 76 + 8 = 472（最后 8px 为白色安全余量行，超过时由它吸收，不挤压正文）。
+-->
+<style>
+@page {
+  size: 800px 480px;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 800px;
+  height: 480px;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'TestFont';
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  border: 4px solid #000000;
+  overflow: hidden;
+}
+
+.layout {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+}
+
+.hdr-cat {
+  height: 68px;
+  line-height: 68px;
+  padding-left: 26px;
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: #000000;
+}
+
+.hdr-badge {
+  height: 68px;
+  line-height: 68px;
+  font-size: 34px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: #ffffff;
+  background-color: #ff0000;
+  text-align: center;
+}
+
+.name-cell {
+  padding: 6px 26px 8px 26px;
+}
+
+.pname {
+  height: 78px;
+  line-height: 78px;
+  font-size: 56px;
+  font-weight: bold;
+  letter-spacing: 6px;
+  color: #000000;
+}
+
+.rule {
+  height: 3px;
+  margin-top: 5px;
+  background-color: #000000;
+}
+
+.price-left {
+  padding: 6px 12px 8px 26px;
+  vertical-align: top;
+}
+
+.price-right {
+  width: 200px;
+  padding: 6px 26px 8px 12px;
+  vertical-align: top;
+  text-align: right;
+}
+
+.plabel {
+  height: 36px;
+  line-height: 36px;
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: #ff0000;
+}
+
+.pline {
+  height: 170px;
+  line-height: 170px;
+  font-size: 145px;
+  font-weight: bold;
+  color: #ff0000;
+}
+
+.cur {
+  font-size: 62px;
+}
+
+.num {
+  font-size: 145px;
+}
+
+.unit {
+  font-size: 38px;
+}
+
+.oldgap {
+  height: 114px;
+}
+
+.olabel {
+  height: 36px;
+  line-height: 36px;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: #000000;
+}
+
+.oprice {
+  height: 56px;
+  line-height: 56px;
+  font-size: 38px;
+  font-weight: bold;
+  color: #000000;
+  text-decoration: line-through;
+}
+
+.foot-left {
+  background-color: #ffff00;
+  vertical-align: top;
+}
+
+.foot-right {
+  width: 200px;
+  background-color: #ffff00;
+  vertical-align: top;
+  text-align: right;
+}
+
+.origin {
+  height: 76px;
+  line-height: 76px;
+  padding-left: 26px;
+  font-size: 30px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: #000000;
+}
+
+.note {
+  height: 76px;
+  line-height: 76px;
+  padding-right: 26px;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: #000000;
+  text-align: right;
+}
+
+.filler {
+  height: 8px;
+  background-color: #ffffff;
+}
+</style>
+</head>
+<body>
+<div class="canvas">
+<table class="layout" cellpadding="0" cellspacing="0">
+<tr>
+<td class="hdr-cat">生鲜蔬菜</td>
+<td class="hdr-badge" width="200">促销</td>
+</tr>
+<tr>
+<td class="name-cell" colspan="2">
+<div class="pname">胡萝卜</div>
+<div class="rule"></div>
+</td>
+</tr>
+<tr>
+<td class="price-left">
+<div class="plabel">促销价</div>
+<div class="pline"><span class="cur">¥</span><span class="num">0.76</span><span class="unit">元</span></div>
+</td>
+<td class="price-right">
+<div class="oldgap"></div>
+<div class="olabel">原价</div>
+<div class="oprice">9.99元</div>
+</td>
+</tr>
+<tr>
+<td class="foot-left">
+<div class="origin">产地：山东</div>
+</td>
+<td class="foot-right">
+<div class="note">当日到货</div>
+</td>
+</tr>
+
+</table>
+</div>
+</body>
+</html>

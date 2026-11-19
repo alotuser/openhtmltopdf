@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>电子价签 - 胡萝卜</title>
+<style>
+/*
+ * ============================================================
+ * 尺寸预算（px）—— 改动任何 padding / line-height 前请先对账
+ * ------------------------------------------------------------
+ *   @page            800 x 480          margin 0
+ *   .canvas 边框      4 * 2 = 8
+ *   内容区            792 x 472   <-- 真正的可用高度只有 472
+ *
+ *   行1 头部   18 + 54 + 8 + 28 + 14 + 3(border)  = 125
+ *   行2 价格   12 + 34 + 10 + 140 + 8             = 204
+ *   行3 信息   14 + 36 + 14                       =  64
+ *   行4 页脚   12 + 24 + 12                       =  48
+ *                              合计              = 441
+ *                              安全缓冲           =  31
+ *
+ * 约束：JhtmlKit.toImage() 走 runFirstPage() + getPageImages().get(0)，
+ * 是单页模式 —— 内容一旦超过 472，超出部分被静默裁掉，不报错、不产生
+ * 第二页。所以这 31px 缓冲不能被任何一行多出的文本吃掉；溢出必须由
+ * 数据层截断 + 渲染后高度断言拦截，不能指望 CSS。
+ * ============================================================
+ */
+
+@page {
+    size: 800px 480px;
+    margin: 0;
+    /* @page 不接受 padding，写了也是无效声明，只会产生解析告警 */
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    /* 高度只由 @page 与 .canvas 控制。这里不再重复声明 800/480，
+       避免三层高度互相打架以及百分比高度解析的不确定性 */
+}
+
+html {
+    /* 必须带兜底：字体未注册时渲染器会对每个 TextBox 走一次 fallback
+       解析并打 warning，既拖慢渲染又让字形度量漂移 */
+    font-family: 'TestFont', sans-serif;
+}
+
+.canvas {
+    /* 显式减法 792 + 4*2 = 800 / 472 + 4*2 = 480，
+       不再依赖 box-sizing: border-box 是否被正确实现
+       （不支持时就是 808 x 488，高度直接越界） */
+    width: 792px;
+    height: 472px;
+    border: 4px solid #000000;
+    background-color: #FFFFFF;
+    /* 仅用于裁掉越界绘制，不是溢出兜底，不要依赖它 */
+    overflow: hidden;
+}
+
+.layout {
+    width: 792px;
+    border-collapse: collapse;
+    border-spacing: 0;
+    /* 关键：固定表格布局，列宽只取 colgroup，跳过"先测量全部内容再
+       分配列宽"的两趟计算，也杜绝列宽随内容漂移 */
+    table-layout: fixed;
+    /* 故意不写 height:100%：百分比高度支持不稳定，会让 31px 缓冲被
+       不均摊到各行、垂直位置随版本浮动。交给内容决定。 */
+}
+
+/* 列宽集中定义，不再分散在 4 个 td 类里重复声明 */
+.col-main {
+    width: 500px;
+}
+
+.col-side {
+    width: 292px;
+}
+
+td {
+    vertical-align: middle;
+    /* 归零 strut：承载 inline-block 的单元格会因基线对齐多出几像素
+       不可控的间隙。所有文本元素都已显式声明 line-height，归零安全。 */
+    line-height: 0;
+    padding: 0;
+}
+
+td.hd-left {
+    padding: 18px 0 14px 30px;
+    border-bottom: 3px solid #000000;
+}
+
+td.hd-right {
+    padding: 18px 30px 14px 0;
+    border-bottom: 3px solid #000000;
+    text-align: right;
+}
+
+.pname {
+    margin: 0;
+    font-size: 46px;
+    line-height: 54px;
+    font-weight: 700;
+    color: #000000;
+    /* 强制单行：换行即 +54px，会吃掉 31px 缓冲并裁掉页脚 */
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.psub {
+    margin: 8px 0 0 0;
+    font-size: 20px;
+    line-height: 28px;
+    color: #000000;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.tag {
+    display: inline-block;
+    width: 128px;
+    height: 56px;
+    line-height: 56px;
+    background-color: #E60012;
+    color: #FFFFFF;
+    font-size: 34px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 4px;
+    /* letter-spacing 在末字后补 4px 会让固定框内文字视觉左偏，右移 2px 补偿 */
+    text-indent: 2px;
+}
+
+td.pz-left {
+    padding: 12px 0 8px 30px;
+    vertical-align: top;
+}
+
+td.pz-right {
+    padding: 12px 30px 8px 0;
+    text-align: right;
+}
+
+.sale-label {
+    display: inline-block;
+    width: 110px;
+    height: 34px;
+    line-height: 34px;
+    background-color: #FFD400;
+    color: #000000;
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.price-line {
+    margin: 10px 0 0 0;
+    line-height: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    color: #E60012;
+}
+
+.cur {
+    font-size: 48px;
+    font-weight: 700;
+    color: #E60012;
+}
+
+.num {
+    font-size: 132px;
+    font-weight: 700;
+    color: #E60012;
+}
+
+.unit {
+    font-size: 40px;
+    font-weight: 700;
+    color: #E60012;
+}
+
+.old-box {
+    display: inline-block;
+    width: 200px;
+    padding: 10px 0;
+    border: 3px solid #000000;
+    background-color: #FFFFFF;
+    text-align: center;
+}
+
+.old-label {
+    margin: 0;
+    font-size: 20px;
+    line-height: 26px;
+    color: #000000;
+}
+
+.old-price {
+    margin: 0;
+    font-size: 40px;
+    line-height: 46px;
+    font-weight: 700;
+    color: #000000;
+    text-decoration: line-through;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+td.info-left {
+    padding: 14px 0 14px 30px;
+    background-color: #FFD400;
+}
+
+td.info-right {
+    padding: 14px 30px 14px 0;
+    background-color: #FFD400;
+    text-align: right;
+}
+
+.info-main {
+    margin: 0;
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 700;
+    color: #000000;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.info-side {
+    margin: 0;
+    font-size: 22px;
+    line-height: 30px;
+    color: #000000;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+td.foot {
+    padding: 12px 30px;
+    text-align: center;
+    font-size: 18px;
+    line-height: 24px;
+    color: #000000;
+    white-space: nowrap;
+    overflow: hidden;
+}
+</style>
+</head>
+<body>
+<div class="canvas">
+<table class="layout" cellpadding="0" cellspacing="0" border="0">
+    <colgroup>
+        <col width="500" class="col-main" />
+        <col width="292" class="col-side" />
+    </colgroup>
+    <tr>
+        <td class="hd-left">
+            <div class="pname">胡萝卜</div>
+            <div class="psub">新鲜蔬菜 · 产地直供</div>
+        </td>
+        <td class="hd-right">
+            <span class="tag">促销</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="pz-left">
+            <span class="sale-label">促销价</span>
+            <div class="price-line"><span class="cur">¥</span><span class="num">0.76</span><span class="unit">元</span></div>
+        </td>
+        <td class="pz-right">
+            <div class="old-box">
+                <div class="old-label">原价</div>
+                <div class="old-price">9.99元</div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td class="info-left">
+            <div class="info-main">产地：山东</div>
+        </td>
+        <td class="info-right">
+            <div class="info-side">新鲜蔬菜</div>
+        </td>
+    </tr>
+    <tr>
+        <td class="foot" colspan="2">价格单位：元　　门店电子价签</td>
+    </tr>
+</table>
+</div>
+</body>
+</html>
